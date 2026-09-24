@@ -18,7 +18,7 @@ Appen är bara för mig. Den körs på mina Macar och synkas mellan dem via iClo
 
 ## Stack och plattform
 
-* **Plattform:** endast macOS (minst macOS 14 Sonoma). Ingen iOS, ingen webb.
+* **Plattform:** endast macOS (minst macOS 26, se beslut D1 i PLAN.md). Ingen iOS, ingen webb.
 * **Språk och UI:** Swift och SwiftUI.
 * **Lagring:** SwiftData.
 * **Synk:** CloudKit via SwiftData (privat databas i mitt iCloud). Jag har redan Apple Developer Program.
@@ -198,6 +198,7 @@ Varje milstolpe ska ge en app som går att köra och använda.
 
 ## Instruktioner till den som bygger
 
+* Planen och framstegen finns i `PLAN.md`. Läs den först, bocka av uppgifter och logga beslut där.
 * Jobba en milstolpe i taget och stäm av med mig innan nästa påbörjas.
 * Håll koden enkel och läsbar. Hellre få filer med tydligt ansvar än abstraktioner i förväg.
 * Följ CloudKit reglerna ovan för varje ändring i modellen, och påminn mig om att driftsätta schemat.
