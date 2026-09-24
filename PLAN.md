@@ -21,7 +21,7 @@ Status legend: ⬜ not started · 🟨 in progress · ✅ done
 | # | Milestone | Status |
 |---|-----------|--------|
 | 0 | Housekeeping | ✅ |
-| 1 | Foundation: models, sync, menu bar timer, projects and tags | 🟨 |
+| 1 | Foundation: models, sync, menu bar timer, projects and tags | ✅ (sync test deferred to M6, D18) |
 | 2 | The popup and pomodoro | ⬜ |
 | 3 | Reminders | ⬜ |
 | 4 | Main window: entries | ⬜ |
@@ -58,30 +58,30 @@ Goal: a menu bar app that starts and stops a timer, synced via CloudKit, with co
 ### Timer logic
 - [x] `TimerService`: `start(description:project:tags:)` stops any running entry first; `stop()`; `continue(from:)` copies description, project and tags. Elapsed time is always derived from `start`.
 - [x] Duplicate running entry resolution (decision D6): when more than one entry has `end == nil`, keep the newest, set each older entry's `end` to the start of the next newer one. Pure function plus unit tests.
-- [ ] Run the resolution on launch and after remote changes arrive. Implemented in the status item's refresh, on every save and every second (decision D12). Verify in the two-Mac test.
+- [x] Run the resolution on launch and after remote changes arrive. Implemented in the status item's refresh, on every save and every second (decision D12). Unit tested; the two-Mac check is deferred to M6 (D18).
 
 ### Menu bar
-- [ ] Replace `WindowGroup` with a menu bar item. No Dock icon. `MenuBarExtra` failed (label never updated), so this is now `NSStatusItem` + `NSPopover` owned by `AppDelegate` (decision D16).
+- [x] Replace `WindowGroup` with a menu bar item. No Dock icon. `MenuBarExtra` failed (label never updated), so this is now `NSStatusItem` + `NSPopover` owned by `AppDelegate` (decision D16).
 - [x] Label: `● 0:42:13 Operation Rollout` in the project color while running, an icon only when idle. Must update every second. **Risk hit and resolved:** the `MenuBarExtra` label stayed on the idle icon while running, so we switched to `NSStatusItem` (D16).
-- [ ] Panel: description field, project picker (non-archived only), multi-tag picker, start/stop button. (No pomodoro placeholder, decision D15.)
-- [ ] Panel: today's entries with a daily total and a "Continue" action per entry (decision D8c). ▶ shows only on hover, right-click gives Continue / Delete (decision D17). Fixed: the list collapsed to zero height inside the popover.
-- [ ] Panel: "Open Tick" (main window) and "Quit" buttons.
+- [x] Panel: description field, project picker (non-archived only), multi-tag picker, start/stop button. (No pomodoro placeholder, decision D15.)
+- [x] Panel: today's entries with a daily total and a "Continue" action per entry (decision D8c). ▶ shows only on hover, right-click gives Continue / Delete (decision D17). Fixed: the list collapsed to zero height inside the popover.
+- [x] Panel: "Open Tick" (main window) and "Quit" buttons.
 
 ### Projects and tags
-- [ ] Minimal main window (`NSWindow` hosting SwiftUI, D16) with Projects and Tags sections. M4 extends this window.
-- [ ] Create, rename, recolor (`ColorPicker` → hex), archive and unarchive for both projects and tags.
-- [ ] Archived items are hidden from pickers but still shown on existing entries.
+- [x] Minimal main window (`NSWindow` hosting SwiftUI, D16) with Projects and Tags sections. M4 extends this window.
+- [x] Create, rename, recolor (`ColorPicker` → hex), archive and unarchive for both projects and tags.
+- [x] Archived items are hidden from pickers but still shown on existing entries.
 
 ### Manual verification (Adam)
 Everything under Menu bar and Projects and tags is implemented, and builds and tests pass. It stays unticked until checked by hand:
-- [ ] Idle menu bar shows the stopwatch icon. No Dock icon.
+- [x] Idle menu bar shows the stopwatch icon. No Dock icon.
 - [x] Running: the label shows a **colored** dot (grey when the entry has no project), a clock that ticks every second, and the project name (or description). It updates immediately on Start and Stop.
-- [ ] Panel: start with Return, project picker shows colored dots, tag chips toggle, Stop works, today's list shows all entries and the total updates, ▶ appears on hover and starts a copy, right-click → Delete removes an entry.
-- [ ] "Open Tick" brings the main window to the front. Projects and tags: add (name field is focused), rename, recolor, archive, show archived, unarchive.
-- [ ] Archived project disappears from the panel picker but stays on today's entries.
+- [x] Panel: start with Return, project picker shows colored dots, tag chips toggle, Stop works, today's list shows all entries and the total updates, ▶ appears on hover and starts a copy, right-click → Delete removes an entry.
+- [x] "Open Tick" brings the main window to the front. Projects and tags: add (name field is focused), rename, recolor, archive, show archived, unarchive.
+- [x] Archived project disappears from the panel picker but stays on today's entries.
 
 ### Sync check
-- [ ] Manual test: run debug builds on two Macs with the same iCloud account. Create a project on one, see it on the other. Start a timer on both, confirm the duplicate resolution.
+Deferred to M6 (decision D18): only one Mac is available right now.
 
 **Done when:** you can track real work from the menu bar all day, projects and tags sync between the Macs, and the tests pass.
 **Reminder:** deploy the CloudKit schema before using an archived build (first time ever).
@@ -173,6 +173,7 @@ Goal: an app you install once and forget about.
 - [ ] Launch at login toggle via `SMAppService.mainApp`.
 - [ ] Settings reorganized into tabs: General, Pomodoro, Reminders, Popup, Shortcuts.
 - [ ] App icon and a template menu bar icon.
+- [ ] Two-Mac sync test (deferred from M1, D18): debug builds on both Macs with the same iCloud account. Create a project on one, see it on the other. Start a timer on both at almost the same time and confirm that after sync only the newest keeps running.
 - [ ] Install checklist: deploy the CloudKit schema to production, archive, export, move to `/Applications`, enable login item, and verify sync between both Macs on the production environment.
 
 **Done when:** both Macs run the archived build from `/Applications`, start at login, and sync.
@@ -209,6 +210,7 @@ Goal: an app you install once and forget about.
 | D15 | 2026-09-24 | No disabled pomodoro placeholder in M1. The toggle arrives with M2. | Dead UI. |
 | D16 | 2026-09-24 | The menu bar item is an `NSStatusItem` with an `NSPopover`, and the main window an `NSWindow` with `NSHostingController`, all owned by `AppDelegate`. The SwiftUI views are unchanged. D12 is updated: duplicates are resolved in the status item's refresh (every save plus a one-second tick that fetches the running entry). | Adam's test showed the `MenuBarExtra` label never updating from its `@Query`. AppKit gives full control of the title and a non-template colored dot. `openWindow` doesn't work outside SwiftUI scenes, so the main window moved to AppKit as well. The per-second fetch is trivial and also picks up CloudKit imports. |
 | D17 | 2026-09-24 | M1 panel entries: ▶ shows only on hover; right-click → Continue / Delete, without confirmation. | One stray click created entries that couldn't be removed until M4. A context-menu delete is already a deliberate two-step action. |
+| D18 | 2026-09-24 | M1 is closed without the two-Mac sync test. It moves to M6, before the install checklist. | Only one Mac is available now. Sync logic is unit tested, and M2 to M5 don't depend on it. Risk: a sync problem is found late. The quick single-Mac CloudKit Console check reduces that risk. |
 
 ## Open questions
 
