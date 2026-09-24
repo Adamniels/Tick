@@ -27,7 +27,8 @@ Status legend: ⬜ not started · 🟨 in progress · ✅ done
 | 4 | Main window: entries | ✅ |
 | 5 | Statistics | ✅ |
 | 6 | Polish and install | 🟨 |
-| 7 | Later: calendar view, Toggl import | ⬜ |
+| 7 | Calendar day view | 🟨 |
+| 8 | Later: Toggl import | ⬜ |
 
 ---
 
@@ -226,9 +227,29 @@ Goal: an app you install once and forget about.
 
 ---
 
-## Milestone 7 — Later
+## Milestone 7 — Calendar day view
 
-- [ ] Calendar day view with entries as blocks on a timeline; drag to create, drag the edges to resize.
+Goal: see a day like Toggl and fix or add entries directly on a timeline (moved ahead of the install, D34).
+
+- [ ] Calendar section in the main window: header with previous/next day (also ⌘← ⌘→), date with a Today badge or button, day total, zoom, and new entry.
+- [ ] Scrollable 24-hour grid, opening at the current time (or the first entry on other days), with a current-time line.
+- [ ] Entries as blocks in project colors (description, project, duration); the running entry dashed and growing live; overlapping entries side by side in columns.
+- [ ] Click a block to edit (the M4 editor); right-click for Edit, Continue, Delete.
+- [ ] Drag on empty space to create (editor opens prefilled; Cancel creates nothing); click on empty space for a 30-minute entry.
+- [ ] Drag a block's top or bottom edge to resize, or the whole block to move. Snaps to 5 minutes, minimum 5 minutes. A running entry: start only, not after now. A block crossing midnight: no dragging on the continuing side.
+- [ ] Pure `CalendarLayout` (positions, overlap columns, snapping, drag results with limits), unit tested.
+
+### Manual verification (Adam)
+- [ ] Today looks like the Toggl day view: blocks at the right times, colors, the running entry growing, the now line.
+- [ ] Previous/next/Today and zoom work.
+- [ ] Create by dragging and by clicking; Cancel creates nothing.
+- [ ] Resize both edges and move a block; the change sticks and shows in Entries.
+- [ ] Overlapping entries appear side by side.
+
+---
+
+## Milestone 8 — Later
+
 - [ ] Import history from Toggl CSV.
 
 ---
@@ -272,6 +293,7 @@ Goal: an app you install once and forget about.
 | D31 | 2026-09-24 | (Q2) Statistics sum entry durations everywhere, so per-project numbers add up to the total. When the period contains overlaps, a notice shows the overlapping time (sum minus covered time) and how many entries, pointing to Entries where they're marked. | Overlaps only come from manual entries or edits and are almost always mistakes; the stats should point at them, not silently compensate. Rejected: union of intervals (per-project stops adding up) and proportional splitting (hard to explain). |
 | D32 | 2026-09-24 | The comparison with the previous period is at the same point in time: this week so far versus last week up to the same weekday and time (likewise for today, the month, and a custom range, which compares with the same length right before it). | Comparing a partial period with a complete one would almost always look like a drop. |
 | D33 | 2026-09-24 | Global shortcuts with no presets: start/stop (stops the running timer, or continues the most recent entry when none runs; opens the panel if there is no history), open panel, and open the main window. | Continuing the last entry is the most useful one-key start. Any preset risks colliding with another app's shortcut, so Adam records his own. |
+| D34 | 2026-09-24 | The calendar day view (brief: "later") is built before the install, as M7; Toggl import becomes M8. The calendar is its own main-window section; blocks can also be moved, like Toggl; drags snap to 5 minutes. | Adam wants it before installing. A list and a timeline are different tools, so both get a direct sidebar entry. Moving is the natural companion to resizing. 5-minute snapping keeps drags precise without fiddling. |
 
 ## Open questions
 
