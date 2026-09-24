@@ -14,4 +14,16 @@ nonisolated enum DurationFormat {
         guard total < 3600 else { return clock(TimeInterval(total)) }
         return String(format: "%d:%02d", total / 60, total % 60)
     }
+
+    /// "3 h 12 min", "45 min", "1 h": for sentences in popups. Rounds down to whole minutes.
+    static func spoken(_ interval: TimeInterval) -> String {
+        let minutes = max(0, Int(interval) / 60)
+        let hours = minutes / 60
+        let rest = minutes % 60
+        switch (hours, rest) {
+        case (0, _): return "\(rest) min"
+        case (_, 0): return "\(hours) h"
+        default: return "\(hours) h \(rest) min"
+        }
+    }
 }

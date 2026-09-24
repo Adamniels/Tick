@@ -11,6 +11,19 @@ struct OverlayAction: Identifiable {
     let handler: () -> Void
 }
 
+/// An optional time field in the popup; actions read `date` when pressed.
+@Observable final class OverlayDateInput {
+    let label: String
+    let range: ClosedRange<Date>
+    var date: Date
+
+    init(label: String, range: ClosedRange<Date>, date: Date) {
+        self.label = label
+        self.range = range
+        self.date = min(max(date, range.lowerBound), range.upperBound)
+    }
+}
+
 /// What the popup shows. `id` identifies the reason for the popup, so a request can be
 /// dismissed from elsewhere (for example when another Mac handled it) and isn't queued twice.
 struct OverlayRequest: Identifiable {
@@ -18,6 +31,7 @@ struct OverlayRequest: Identifiable {
     var symbol = "bell.fill"
     let title: String
     let message: String
+    var dateInput: OverlayDateInput?
     let actions: [OverlayAction]
 
     static func test() -> OverlayRequest {

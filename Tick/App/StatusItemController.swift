@@ -72,6 +72,11 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         }
     }
 
+    /// Opens the panel if it isn't already open (for the idle popup's "Start new timer").
+    func openPanel() {
+        if !popover.isShown { open() }
+    }
+
     private func open() {
         guard let button = statusItem.button, let buttonWindow = button.window,
               let anchorView = anchorWindow.contentView else { return }

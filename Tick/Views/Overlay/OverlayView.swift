@@ -37,9 +37,19 @@ struct OverlayView: View {
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
-            HStack(spacing: 12) {
-                ForEach(request.actions) { action in
-                    button(for: action)
+            if let input = request.dateInput {
+                DateInputField(input: input)
+            }
+            // More than three choices stack vertically so every label stays readable.
+            Group {
+                if request.actions.count > 3 {
+                    VStack(spacing: 10) {
+                        ForEach(request.actions) { button(for: $0, fullWidth: true) }
+                    }
+                } else {
+                    HStack(spacing: 12) {
+                        ForEach(request.actions) { button(for: $0, fullWidth: false) }
+                    }
                 }
             }
             .padding(.top, 8)
@@ -52,8 +62,8 @@ struct OverlayView: View {
     }
 
     @ViewBuilder
-    private func button(for action: OverlayAction) -> some View {
-        let label = Text(action.title).frame(minWidth: 130)
+    private func button(for action: OverlayAction, fullWidth: Bool) -> some View {
+        let label = Text(action.title).frame(minWidth: 130, maxWidth: fullWidth ? .infinity : nil)
         switch action.role {
         case .primary:
             Button { onAction(action) } label: { label }
@@ -68,5 +78,22 @@ struct OverlayView: View {
                 .buttonStyle(.bordered)
                 .controlSize(.extraLarge)
         }
+    }
+}
+
+private struct DateInputField: View {
+    @Bindable var input: OverlayDateInput
+
+    var body: some View {
+        // Include the date only when the range spans more than one day.
+        let spansDays = !Calendar.current.isDate(input.range.lowerBound, inSameDayAs: input.range.upperBound)
+        DatePicker(
+            input.label,
+            selection: $input.date,
+            in: input.range,
+            displayedComponents: spansDays ? [.date, .hourAndMinute] : [.hourAndMinute]
+        )
+        .font(.title3)
+        .fixedSize()
     }
 }

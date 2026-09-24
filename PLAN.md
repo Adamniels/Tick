@@ -127,15 +127,24 @@ Goal: the unmissable popup exists, and pomodoro uses it.
 
 Goal: Tick notices when you're not tracking, forgot to stop, or were away.
 
-- [ ] Settings: work hours (weekdays plus start and end time), idle threshold X, forgotten timer threshold Y (default 3 h), presence threshold.
-- [ ] `ReminderService` with one periodic check (around 30 s) that feeds a pure evaluator: (now, running entry, settings, presence) → reminder or none. Unit tests for work hours edges (midnight, weekends) and thresholds.
-- [ ] Presence detection (decision D5): screen unlocked and last user input less than N minutes ago (`CGEventSource.secondsSinceLastEventType`).
-- [ ] **Idle reminder:** no running timer for X minutes, within work hours, user present. Popup offers quick start of the 3–5 most recent projects, **Start new timer** (opens the panel focused), and **Remind me in 15 min**.
-- [ ] **Forgotten timer:** running longer than Y hours. Popup offers **Still working** (snooze until another Y), **Stop now**, and **Stop at…** (time picker bounded between start and now).
-- [ ] **Sleep and lock:** track away periods via `NSWorkspace` sleep and wake notifications plus screen lock and unlock notifications. On return, if a timer ran through an away period longer than a minimum (for example 5 min), popup: **Keep the time** / **Remove away time** (stop at away start and continue now as a new entry) / **Stop at away start**.
-- [ ] Reminders never interrupt an active pomodoro popup. They queue behind it.
+- [ ] Settings: work hours (weekdays plus start and end time), idle threshold X, forgotten timer threshold Y (default 3 h), presence threshold, away minimum, snooze length, and an on/off switch per reminder.
+- [x] Pure `ReminderEvaluator` (inputs: time, running entry, pomodoro status, presence, snoozes) and `WorkHours` (overnight windows, wall-clock times across DST), unit tested. Run from the per-second refresh loop (D23).
+- [x] Presence (decision D5): screen unlocked and last user input less than N minutes ago (`CGEventSource.secondsSinceLastEventType`).
+- [x] **Idle reminder:** no running timer for X minutes, within work hours, user present, no pomodoro active (D25). Popup offers quick start of the 3 most recent distinct entries, **Start new timer** (opens the panel), and **Remind me in N min**. Unit tested.
+- [x] **Forgotten timer:** running longer than Y hours. Popup offers **Still working** (snooze another Y), **Stop at selected time** (time field in the popup, D27), and **Stop now**. Unit tested.
+- [x] **Sleep and lock:** `AwayTracker` over sleep, lock and display sleep (D26). On return, if a timer ran through an away period longer than the minimum, popup: **Remove away time** (split around the gap) / **Keep the time** / **Stop at departure**. Unit tested.
+- [x] Popups close themselves when their reason is resolved elsewhere (timer started or stopped, possibly on another Mac). Unit tested.
+- [ ] Reminders never interrupt an active pomodoro popup. They queue behind it. (Uses the M2 overlay queue; exercise manually.)
 
-**Done when:** each reminder triggers correctly in manual tests (using temporarily short thresholds), and the evaluator tests pass.
+### Manual verification (Adam)
+Set short thresholds first (Settings → Reminders: idle 1 min, forgotten 1 h is the minimum, away 1 min) and make today a work day with hours covering now.
+- [ ] Idle: stop all timers, keep using the Mac; after the threshold the popup asks what you're working on. Try a quick-start button, then **Start new timer** (the panel opens), then **Remind me in N min**.
+- [ ] Idle does not appear when you're away from the keyboard longer than the presence setting, outside work hours, or during a pomodoro break.
+- [ ] Away: with a timer running, lock the screen (Ctrl+Cmd+Q) for more than the minimum, unlock: the popup offers to remove the away time. Check the entries in the panel afterwards.
+- [ ] Forgotten: optional (the minimum is 1 h). Covered by unit tests.
+- [ ] Settings: work day toggles and start and end times save and take effect.
+
+**Done when:** each reminder triggers correctly in manual tests, and the evaluator and service tests pass.
 
 ---
 
@@ -220,6 +229,9 @@ Goal: an app you install once and forget about.
 | D22 | 2026-09-24 | Pomodoro and timer rules: "End pomodoro" also stops the timer. Stopping the timer ends the run (a block cut short doesn't count). Starting with pomodoro off ends the run. Starting with pomodoro on during a break starts the next block. Switching task mid-block keeps the block. | Predictable: pomodoro never runs without you tracking, and tracking is never silently stopped except by a break (configurable). |
 | D23 | 2026-09-24 | `AppDelegate` owns one refresh loop: every second (aligned to the displayed clock) and after every save it resolves duplicates, runs the pomodoro check, and redraws the menu bar. `PomodoroService` takes an injectable clock for its popup actions. | One source of timing. Wake from sleep and CloudKit imports need no special handling because every tick re-reads state. The clock makes button actions testable in simulated time. |
 | D24 | 2026-09-24 | Keep the system `NSPopover`, but anchor it to an invisible, click-through window placed over the menu bar item when it opens, so it never moves while open. The running description is applied on Return (or focus loss, or closing the panel), not per keystroke. | A popover follows its anchor, and the item's width follows its title (starting a timer grows it leftwards), so anchored to the item it jumped, sometimes in the wrong direction. Rejected: a custom borderless dropdown (failed three times: at the screen origin, then at zero size), locking the item's width while open (macOS wrapped the title onto two lines), and re-anchoring on width changes (jumped, sometimes the wrong way). A fixed anchor window is the standard menu bar app technique. |
+| D25 | 2026-09-24 | Reminders are evaluated locally on each Mac. The idle clock counts from the latest of: last entry end, app launch, return from away, and the start of today's work window. No idle reminder while a pomodoro phase is active. | Presence is local, so idle belongs to the Mac you're at. Counting from launch, return and work start avoids a popup the moment you log in or come back. A pomodoro break is deliberate time without a timer. |
+| D26 | 2026-09-24 | "Away" means asleep, locked, or displays asleep; the period ends when the last of them clears. "Remove away time" splits the entry: it ends at departure and continues as a new entry from now. | Displays sleeping without a lock is also time away from the Mac. Splitting keeps both halves correct and visible, instead of silently shifting the start time. |
+| D27 | 2026-09-24 | Popups can carry an optional time field (`OverlayDateInput`), and more than three buttons stack vertically. | "Stop at selected time" needs a time input. The idle popup has up to five choices, which don't fit side by side. |
 
 ## Open questions
 
