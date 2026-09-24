@@ -1,3 +1,4 @@
+import KeyboardShortcuts
 import SwiftUI
 
 /// Local settings (decision D20: a section of the main window rather than a Settings scene).
@@ -32,25 +33,65 @@ struct SettingsView: View {
     @AppStorage(Key.overlaySound) private var sound = overlay.soundName
 
     private let soundNames = SystemSound.names
+    @State private var launchAtLogin = LaunchAtLogin.State.disabled
 
     var body: some View {
-        Form {
-            Section("Pomodoro") {
-                Stepper("Work block: \(workMinutes) min", value: $workMinutes, in: 1...180)
-                Stepper("Short break: \(shortBreakMinutes) min", value: $shortBreakMinutes, in: 1...60)
-                Stepper("Long break: \(longBreakMinutes) min", value: $longBreakMinutes, in: 1...120)
-                Stepper("Long break after every \(longBreakEvery) blocks", value: $longBreakEvery, in: 1...12)
-                Stepper("\"More time\" adds \(extendMinutes) min", value: $extendMinutes, in: 1...60)
-                Toggle("Keep the time entry running during breaks", isOn: $keepEntryRunning)
-            }
+        TabView {
+            Tab("General", systemImage: "gearshape") { general }
+            Tab("Pomodoro", systemImage: "timer") { pomodoroSettings }
+            Tab("Reminders", systemImage: "bell") { reminderSettings }
+            Tab("Popup", systemImage: "rectangle.inset.filled") { popupSettings }
+            Tab("Shortcuts", systemImage: "keyboard") { shortcutSettings }
+        }
+        .padding()
+        .navigationTitle("Settings")
+        .onAppear { launchAtLogin = LaunchAtLogin.state }
+    }
 
+    private var general: some View {
+        Form {
+            Section {
+                Toggle("Open Tick at login", isOn: Binding(
+                    get: { launchAtLogin != .disabled },
+                    set: { enabled in
+                        LaunchAtLogin.setEnabled(enabled)
+                        launchAtLogin = LaunchAtLogin.state
+                    }
+                ))
+                if launchAtLogin == .requiresApproval {
+                    HStack {
+                        Text("macOS needs your approval in Login Items.")
+                            .foregroundStyle(.secondary)
+                        Button("Open Login Items…", action: LaunchAtLogin.openSystemSettings)
+                    }
+                }
+            } footer: {
+                Text("Turn this on in the copy of Tick in Applications, not in a build run from Xcode.")
+            }
+        }
+        .formStyle(.grouped)
+    }
+
+    private var pomodoroSettings: some View {
+        Form {
+            Stepper("Work block: \(workMinutes) min", value: $workMinutes, in: 1...180)
+            Stepper("Short break: \(shortBreakMinutes) min", value: $shortBreakMinutes, in: 1...60)
+            Stepper("Long break: \(longBreakMinutes) min", value: $longBreakMinutes, in: 1...120)
+            Stepper("Long break after every \(longBreakEvery) blocks", value: $longBreakEvery, in: 1...12)
+            Stepper("\"More time\" adds \(extendMinutes) min", value: $extendMinutes, in: 1...60)
+            Toggle("Keep the time entry running during breaks", isOn: $keepEntryRunning)
+        }
+        .formStyle(.grouped)
+    }
+
+    private var reminderSettings: some View {
+        Form {
             Section("Work hours") {
                 WeekdayPicker(mask: $workDaysMask)
                 DatePicker("Start", selection: minuteOfDay($workStartMinute), displayedComponents: .hourAndMinute)
                 DatePicker("End", selection: minuteOfDay($workEndMinute), displayedComponents: .hourAndMinute)
             }
-
-            Section("Reminders") {
+            Section("Not tracking") {
                 Toggle("Remind me when no timer is running during work hours", isOn: $idleEnabled)
                 Stepper("After \(idleMinutes) min without a timer", value: $idleMinutes, in: 1...240)
                     .disabled(!idleEnabled)
@@ -58,35 +99,57 @@ struct SettingsView: View {
                     .disabled(!idleEnabled)
                 Stepper("\"Remind me later\" waits \(snoozeMinutes) min", value: $snoozeMinutes, in: 1...240)
                     .disabled(!idleEnabled)
+            }
+            Section("Long-running timer") {
                 Toggle("Ask when a timer has run for a long time", isOn: $forgottenEnabled)
                 Stepper("After \(forgottenHours) h", value: $forgottenHours, in: 1...24)
                     .disabled(!forgottenEnabled)
+            }
+            Section("Time away") {
                 Toggle("Ask about time away (sleep, lock) while a timer ran", isOn: $awayEnabled)
                 Stepper("When away at least \(awayMinimumMinutes) min", value: $awayMinimumMinutes, in: 1...120)
                     .disabled(!awayEnabled)
             }
+        }
+        .formStyle(.grouped)
+    }
 
-            Section("Popup") {
-                Slider(value: $dimOpacity, in: 0.2...0.95) {
-                    Text("Background dimming")
+    private var popupSettings: some View {
+        Form {
+            Slider(value: $dimOpacity, in: 0.2...0.95) {
+                Text("Background dimming")
+            }
+            Picker("Card size", selection: $cardSize) {
+                ForEach(OverlayCardSize.allCases) { size in
+                    Text(size.rawValue.capitalized).tag(size)
                 }
-                Picker("Card size", selection: $cardSize) {
-                    ForEach(OverlayCardSize.allCases) { size in
-                        Text(size.rawValue.capitalized).tag(size)
-                    }
+            }
+            Picker("Sound", selection: $sound) {
+                Text("None").tag("")
+                ForEach(soundNames, id: \.self) { name in
+                    Text(name).tag(name)
                 }
-                Picker("Sound", selection: $sound) {
-                    Text("None").tag("")
-                    ForEach(soundNames, id: \.self) { name in
-                        Text(name).tag(name)
-                    }
+            }
+            .onChange(of: sound) { _, name in SystemSound.play(name) }
+            Button("Test popup", action: onTestPopup)
+        }
+        .formStyle(.grouped)
+    }
+
+    private var shortcutSettings: some View {
+        Form {
+            Section {
+                LabeledContent("Start or stop timer") {
+                    KeyboardShortcuts.Recorder(for: .toggleTimer)
                 }
-                .onChange(of: sound) { _, name in SystemSound.play(name) }
-                Button("Test popup", action: onTestPopup)
+                LabeledContent("Open Tick panel") {
+                    KeyboardShortcuts.Recorder(for: .openPanel)
+                }
+            } footer: {
+                Text("Start or stop: stops the running timer, or continues your most recent entry when none is running.")
             }
         }
         .formStyle(.grouped)
-        .navigationTitle("Settings")
     }
 
     /// Edits minutes since midnight through a time-of-day picker.

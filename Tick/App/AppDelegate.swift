@@ -1,4 +1,5 @@
 import AppKit
+import KeyboardShortcuts
 import OSLog
 import SwiftData
 
@@ -45,6 +46,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.mainWindowController = mainWindowController
         self.statusItemController = statusItemController
 
+        registerShortcuts(pomodoro: pomodoro, statusItemController: statusItemController)
+
         saveObserver = NotificationCenter.default.addObserver(
             forName: ModelContext.didSave, object: nil, queue: .main
         ) { [weak self] _ in
@@ -56,6 +59,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 let reference = self?.refresh()
                 try? await Task.sleep(for: .seconds(MenuBarTitle.delayUntilNextTick(reference: reference, now: .now)))
             }
+        }
+    }
+
+    /// Start or stop: stops the running timer, or continues the most recent entry (D33).
+    private func registerShortcuts(pomodoro: PomodoroService, statusItemController: StatusItemController) {
+        let context = modelContainer.mainContext
+        KeyboardShortcuts.onKeyUp(for: .toggleTimer) { [weak statusItemController] in
+            let timer = TimerService(context: context)
+            do {
+                if try !timer.runningEntries().isEmpty {
+                    try pomodoro.stop()
+                } else if let latest = try timer.latestEntry() {
+                    let usePomodoro = UserDefaults.standard.bool(forKey: AppSettings.Key.pomodoroEnabled)
+                    try pomodoro.continueEntry(latest, usePomodoro: usePomodoro)
+                } else {
+                    statusItemController?.openPanel()
+                }
+            } catch {
+                Log.timer.error("Shortcut failed: \(String(describing: error), privacy: .public)")
+            }
+        }
+        KeyboardShortcuts.onKeyUp(for: .openPanel) { [weak statusItemController] in
+            statusItemController?.openPanel()
         }
     }
 

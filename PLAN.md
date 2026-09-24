@@ -197,12 +197,30 @@ Goal: see where the time goes.
 
 Goal: an app you install once and forget about.
 
-- [ ] Add `KeyboardShortcuts` (SPM, pre-approved in the brief). Global shortcuts: start/stop toggle and open panel, both configurable in Settings.
-- [ ] Launch at login toggle via `SMAppService.mainApp`.
+- [x] Add `KeyboardShortcuts` 3.1.0 (SPM, pre-approved in the brief; `Package.resolved` committed).
+- [ ] Global shortcuts, recorded in Settings → Shortcuts, no presets (D33): **Start or stop timer** (stops the running timer, or continues the most recent entry) and **Open Tick panel**.
+- [ ] Launch at login toggle via `SMAppService.mainApp` (Settings → General), including the "requires approval" case.
 - [ ] Settings reorganized into tabs: General, Pomodoro, Reminders, Popup, Shortcuts.
-- [ ] App icon and a template menu bar icon.
-- [ ] Two-Mac sync test (deferred from M1, D18): debug builds on both Macs with the same iCloud account. Create a project on one, see it on the other. Start a timer on both at almost the same time and confirm that after sync only the newest keeps running. Run a 1-minute pomodoro with both awake: both show the popup, and answering on one closes it on the other (D4).
-- [ ] Install checklist: deploy the CloudKit schema to production, archive, export, move to `/Applications`, enable login item, and verify sync between both Macs on the production environment.
+- [ ] App icon (generated: white stopwatch on an orange-red gradient). The menu bar icon stays the SF Symbol `stopwatch`, a template image.
+- [ ] Two-Mac sync test (deferred from M1, D18), see the install steps below.
+
+### Install (Adam; needs your Apple account)
+1. **Check the development schema.** CloudKit Console → `iCloud.com.adamniels.Tick` → Development → Schema → Record Types. All four must exist: `CD_Project`, `CD_Tag`, `CD_TimeEntry`, `CD_PomodoroSession` (with `CD_runID` and `CD_endedAt`). A record type only appears after its first record is saved, so if one is missing, create one in a debug build (for example a tag) and check again.
+2. **Deploy the schema.** CloudKit Console → Deploy Schema Changes → deploy to Production.
+3. **Archive.** Xcode → Product → Archive. In the Organizer: Distribute App → **Direct Distribution**. Xcode signs with Developer ID and notarizes; this build uses the **production** CloudKit environment. Export `Tick.app`.
+4. **Install.** Quit the debug Tick (Quit in the panel), move the exported `Tick.app` to Applications, open it.
+5. **Login item.** Settings → General → "Open Tick at login". Approve in System Settings if asked.
+6. **Note: production starts empty.** Everything tracked with debug builds lives in the development environment and stays there, including today's test entries. Debug builds from Xcode keep using development, so the two never mix.
+7. **Second Mac.** Copy the same exported `Tick.app` to its Applications, same Apple ID, open it, then run the two-Mac sync test:
+   - Create a project on one Mac; it appears on the other within about a minute.
+   - Start a timer on both at almost the same time; after sync only the newest keeps running (D6).
+   - Run a 1-minute pomodoro with both awake: both show the popup, and answering on one closes it on the other (D4).
+
+### Manual verification (Adam)
+- [ ] Record both shortcuts; start/stop and open panel work from any app.
+- [ ] Settings tabs all show their settings; changes still take effect.
+- [ ] The installed app shows the new icon in Finder and Launchpad.
+- [ ] After a restart (or log out and in), Tick starts by itself.
 
 **Done when:** both Macs run the archived build from `/Applications`, start at login, and sync.
 
@@ -253,6 +271,7 @@ Goal: an app you install once and forget about.
 | D30 | 2026-09-24 | (Q1) An entry with several tags counts its full time toward each tag; the tag chart says tag totals can exceed the period total. Untagged time gets a "No tag" bar. | Splitting time between tags would give numbers no one can trace back to entries. |
 | D31 | 2026-09-24 | (Q2) Statistics sum entry durations everywhere, so per-project numbers add up to the total. When the period contains overlaps, a notice shows the overlapping time (sum minus covered time) and how many entries, pointing to Entries where they're marked. | Overlaps only come from manual entries or edits and are almost always mistakes; the stats should point at them, not silently compensate. Rejected: union of intervals (per-project stops adding up) and proportional splitting (hard to explain). |
 | D32 | 2026-09-24 | The comparison with the previous period is at the same point in time: this week so far versus last week up to the same weekday and time (likewise for today, the month, and a custom range, which compares with the same length right before it). | Comparing a partial period with a complete one would almost always look like a drop. |
+| D33 | 2026-09-24 | Two global shortcuts with no presets: start/stop (stops the running timer, or continues the most recent entry when none runs; opens the panel if there is no history) and open panel. | Continuing the last entry is the most useful one-key start. Any preset risks colliding with another app's shortcut, so Adam records his own. |
 
 ## Open questions
 
