@@ -62,7 +62,7 @@ Goal: a menu bar app that starts and stops a timer, synced via CloudKit, with co
 
 ### Menu bar
 - [ ] Replace `WindowGroup` with a menu bar item. No Dock icon. `MenuBarExtra` failed (label never updated), so this is now `NSStatusItem` + `NSPopover` owned by `AppDelegate` (decision D16).
-- [ ] Label: `● 0:42:13 Operation Rollout` in the project color while running, an icon only when idle. Must update every second. **Risk hit and resolved:** the `MenuBarExtra` label stayed on the idle icon while running, so we switched to `NSStatusItem` (D16).
+- [x] Label: `● 0:42:13 Operation Rollout` in the project color while running, an icon only when idle. Must update every second. **Risk hit and resolved:** the `MenuBarExtra` label stayed on the idle icon while running, so we switched to `NSStatusItem` (D16).
 - [ ] Panel: description field, project picker (non-archived only), multi-tag picker, start/stop button. (No pomodoro placeholder, decision D15.)
 - [ ] Panel: today's entries with a daily total and a "Continue" action per entry (decision D8c). ▶ shows only on hover, right-click gives Continue / Delete (decision D17). Fixed: the list collapsed to zero height inside the popover.
 - [ ] Panel: "Open Tick" (main window) and "Quit" buttons.
@@ -75,7 +75,7 @@ Goal: a menu bar app that starts and stops a timer, synced via CloudKit, with co
 ### Manual verification (Adam)
 Everything under Menu bar and Projects and tags is implemented, and builds and tests pass. It stays unticked until checked by hand:
 - [ ] Idle menu bar shows the stopwatch icon. No Dock icon.
-- [ ] Running: the label shows a **colored** dot (grey when the entry has no project), a clock that ticks every second, and the project name (or description). It updates immediately on Start and Stop.
+- [x] Running: the label shows a **colored** dot (grey when the entry has no project), a clock that ticks every second, and the project name (or description). It updates immediately on Start and Stop.
 - [ ] Panel: start with Return, project picker shows colored dots, tag chips toggle, Stop works, today's list shows all entries and the total updates, ▶ appears on hover and starts a copy, right-click → Delete removes an entry.
 - [ ] "Open Tick" brings the main window to the front. Projects and tags: add (name field is focused), rename, recolor, archive, show archived, unarchive.
 - [ ] Archived project disappears from the panel picker but stays on today's entries.
