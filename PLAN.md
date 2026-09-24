@@ -24,7 +24,7 @@ Status legend: ⬜ not started · 🟨 in progress · ✅ done
 | 1 | Foundation: models, sync, menu bar timer, projects and tags | ✅ (sync test deferred to M6, D18) |
 | 2 | The popup and pomodoro | ✅ |
 | 3 | Reminders | ✅ |
-| 4 | Main window: entries | 🟨 |
+| 4 | Main window: entries | ✅ |
 | 5 | Statistics | ⬜ |
 | 6 | Polish and install | ⬜ |
 | 7 | Later: calendar view, Toggl import | ⬜ |
@@ -153,21 +153,21 @@ Set short thresholds first (Settings → Reminders: idle 1 min, forgotten 1 h is
 Goal: full control of history.
 
 - [x] Main window as a `NavigationSplitView`: Entries (default), Projects, Tags, Settings (Statistics added in M5).
-- [ ] Entries list grouped by day with day totals. The running entry is shown live. Fetches 14 days at a time with "Show earlier days" rather than all history.
+- [x] Entries list grouped by day with day totals. The running entry is shown live. Fetches 14 days at a time with "Show earlier days" rather than all history.
 - [x] Overlap detection as a pure function (one sorted pass, unit tested). Overlapping entries are marked with an orange warning icon.
 - [x] Pure day grouping and draft validation, unit tested. `TimerService.save(_:to:)` creates or updates from a draft, unit tested.
-- [ ] Edit sheet on a draft (D28): description, project, tags, start, end. Validation: end after start; a running entry can't start in the future and its end isn't editable here (D29). Updates `updatedAt`.
-- [ ] Add a manual entry with the same sheet (defaults to the last hour).
-- [ ] Double-click to edit; right-click for Edit, Continue and Delete; the Delete key deletes. Delete asks for confirmation.
+- [x] Edit sheet on a draft (D28): description, project, tags, start, end. Validation: end after start; a running entry can't start in the future and its end isn't editable here (D29). Updates `updatedAt`.
+- [x] Add a manual entry with the same sheet (defaults to the last hour).
+- [x] Double-click to edit; right-click for Edit, Continue and Delete; the Delete key deletes. Delete asks for confirmation.
 - [x] Shared `ProjectPicker` and `TagSelector` used by the panel and the editor.
 
 ### Manual verification (Adam)
-- [ ] Entries shows today and earlier days with correct totals; the running entry ticks.
-- [ ] Double-click an entry, change description, project, tags and times, Save; then again with Cancel (nothing changes).
-- [ ] Try an end before the start: Save is disabled with a message.
-- [ ] Add a manual entry that overlaps another: both show the orange warning.
-- [ ] Right-click → Continue starts a timer; right-click → Delete… and the Delete key both ask before deleting.
-- [ ] "Show earlier days" loads more history.
+- [x] Entries shows today and earlier days with correct totals; the running entry ticks.
+- [x] Double-click an entry, change description, project, tags and times, Save; then again with Cancel (nothing changes).
+- [x] Try an end before the start: Save is disabled with a message.
+- [x] Add a manual entry that overlaps another: both show the orange warning.
+- [x] Right-click → Continue starts a timer; right-click → Delete… and the Delete key both ask before deleting.
+- [x] "Show earlier days" loads more history.
 
 **Done when:** you can fix any mistake in your history without touching the menu bar, and the tests pass.
 
@@ -248,6 +248,7 @@ Goal: an app you install once and forget about.
 ## Open questions
 
 - **Q1 (M5):** An entry with several tags: does its full time count toward each tag? Proposal: yes, with a note that tag totals can exceed the period total. Splitting the time between tags would give misleading numbers.
+- **Q2 (M5):** How do overlapping entries count in statistics? Today day totals sum durations, so overlapping time counts twice (only manual entries or edits can overlap; the timer can't). Proposal: keep summing everywhere, so per-project numbers add up to the total and trace back to entries, and show a notice when a period contains overlaps ("includes 3 min of overlapping time from 2 entries") pointing to the marked entries. Rejected: union of intervals (per-project stops adding up) and proportional splitting (hard to explain). Possible later (M7): a "trim overlap" action in the editor.
 
 ## CloudKit schema change log
 
