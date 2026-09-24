@@ -5,11 +5,13 @@ import SwiftUI
 /// The main window, created on first use and reused afterwards (decision D16).
 final class MainWindowController {
     private let modelContainer: ModelContainer
+    private let pomodoro: PomodoroService
     private let onTestPopup: () -> Void
     private var window: NSWindow?
 
-    init(modelContainer: ModelContainer, onTestPopup: @escaping () -> Void) {
+    init(modelContainer: ModelContainer, pomodoro: PomodoroService, onTestPopup: @escaping () -> Void) {
         self.modelContainer = modelContainer
+        self.pomodoro = pomodoro
         self.onTestPopup = onTestPopup
     }
 
@@ -22,13 +24,15 @@ final class MainWindowController {
 
     private func makeWindow() -> NSWindow {
         let hostingController = NSHostingController(
-            rootView: MainWindow(onTestPopup: onTestPopup).modelContainer(modelContainer)
+            rootView: MainWindow(onTestPopup: onTestPopup)
+                .modelContainer(modelContainer)
+                .environment(pomodoro)
         )
         hostingController.sceneBridgingOptions = [.toolbars, .title]
         let window = NSWindow(contentViewController: hostingController)
         window.title = "Tick"
         window.isReleasedWhenClosed = false
-        window.setContentSize(NSSize(width: 720, height: 480))
+        window.setContentSize(NSSize(width: 820, height: 560))
         window.center()
         window.setFrameAutosaveName("MainWindow")
         return window

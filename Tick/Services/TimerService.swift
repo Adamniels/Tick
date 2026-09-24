@@ -48,6 +48,26 @@ struct TimerService {
         return try context.fetch(descriptor).first
     }
 
+    /// Saves an edited draft to `entry`, or creates a new manual entry when `entry` is nil.
+    /// The caller validates the draft first (`EntryDraft.validationError`).
+    @discardableResult
+    func save(_ draft: EntryDraft, to entry: TimeEntry?) throws -> TimeEntry {
+        let target = entry ?? TimeEntry(start: draft.start, end: draft.end)
+        if entry == nil {
+            context.insert(target)
+        }
+        target.entryDescription = draft.description.trimmingCharacters(in: .whitespaces)
+        target.project = draft.project
+        target.tags = draft.tags
+        target.start = draft.start
+        if !target.isRunning {
+            target.end = draft.end
+        }
+        target.updatedAt = .now
+        try context.save()
+        return target
+    }
+
     /// Deleting the running entry stops tracking.
     func delete(_ entry: TimeEntry) throws {
         context.delete(entry)

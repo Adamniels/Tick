@@ -152,12 +152,22 @@ Set short thresholds first (Settings → Reminders: idle 1 min, forgotten 1 h is
 
 Goal: full control of history.
 
-- [ ] Main window as a `NavigationSplitView`: Entries, Projects, Tags (Statistics added in M5).
-- [ ] Entries list grouped by day with day totals. The running entry is shown live. Fetch a bounded date range with "load more" rather than all history.
-- [ ] Overlap detection as a pure function (unit tested). Overlapping entries are marked visually.
-- [ ] Edit sheet: description, project, tags, start, end. Validation: end must be after start. Updates `updatedAt`.
-- [ ] Add a manual entry with the same sheet.
-- [ ] Delete with confirmation. "Continue" from any row.
+- [x] Main window as a `NavigationSplitView`: Entries (default), Projects, Tags, Settings (Statistics added in M5).
+- [ ] Entries list grouped by day with day totals. The running entry is shown live. Fetches 14 days at a time with "Show earlier days" rather than all history.
+- [x] Overlap detection as a pure function (one sorted pass, unit tested). Overlapping entries are marked with an orange warning icon.
+- [x] Pure day grouping and draft validation, unit tested. `TimerService.save(_:to:)` creates or updates from a draft, unit tested.
+- [ ] Edit sheet on a draft (D28): description, project, tags, start, end. Validation: end after start; a running entry can't start in the future and its end isn't editable here (D29). Updates `updatedAt`.
+- [ ] Add a manual entry with the same sheet (defaults to the last hour).
+- [ ] Double-click to edit; right-click for Edit, Continue and Delete; the Delete key deletes. Delete asks for confirmation.
+- [x] Shared `ProjectPicker` and `TagSelector` used by the panel and the editor.
+
+### Manual verification (Adam)
+- [ ] Entries shows today and earlier days with correct totals; the running entry ticks.
+- [ ] Double-click an entry, change description, project, tags and times, Save; then again with Cancel (nothing changes).
+- [ ] Try an end before the start: Save is disabled with a message.
+- [ ] Add a manual entry that overlaps another: both show the orange warning.
+- [ ] Right-click → Continue starts a timer; right-click → Delete… and the Delete key both ask before deleting.
+- [ ] "Show earlier days" loads more history.
 
 **Done when:** you can fix any mistake in your history without touching the menu bar, and the tests pass.
 
@@ -232,6 +242,8 @@ Goal: an app you install once and forget about.
 | D25 | 2026-09-24 | Reminders are evaluated locally on each Mac. The idle clock counts from the latest of: last entry end, app launch, return from away, and the start of today's work window. No idle reminder while a pomodoro phase is active. | Presence is local, so idle belongs to the Mac you're at. Counting from launch, return and work start avoids a popup the moment you log in or come back. A pomodoro break is deliberate time without a timer. |
 | D26 | 2026-09-24 | "Away" means asleep, locked, or displays asleep; the period ends when the last of them clears. "Remove away time" splits the entry: it ends at departure and continues as a new entry from now. | Displays sleeping without a lock is also time away from the Mac. Splitting keeps both halves correct and visible, instead of silently shifting the start time. |
 | D27 | 2026-09-24 | Popups can carry an optional time field (`OverlayDateInput`), and more than three buttons stack vertically. | "Stop at selected time" needs a time input. The idle popup has up to five choices, which don't fit side by side. |
+| D28 | 2026-09-24 | The entry editor works on a draft copy (`EntryDraft`) and saves only on Save. | Live binding would save, and sync, every keystroke, and Cancel couldn't undo. A draft also makes validation a pure, testable function. |
+| D29 | 2026-09-24 | A running entry's end can't be edited in the editor; stopping goes through the panel. | Stopping has pomodoro rules (D22). Keeping one way to stop avoids a second path that bypasses them. |
 
 ## Open questions
 

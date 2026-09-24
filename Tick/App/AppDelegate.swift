@@ -29,7 +29,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard !Persistence.isRunningTests else { return }
 
         let pomodoro = PomodoroService(context: modelContainer.mainContext, overlay: overlay)
-        let mainWindowController = MainWindowController(modelContainer: modelContainer) { [overlay] in
+        let mainWindowController = MainWindowController(modelContainer: modelContainer, pomodoro: pomodoro) { [overlay] in
             overlay.show(.test())
         }
         let statusItemController = StatusItemController(
