@@ -116,7 +116,7 @@ Goal: the unmissable popup exists, and pomodoro uses it.
 - [x] Menu bar shows the phase and remaining time, for example `🍅 18:42`, or a break symbol during breaks.
 - [x] If `plannedEnd` passed while the Mac was asleep, show the popup on wake. (Covered by the per-second check; verify manually.)
 - [x] Running entry: the description is editable in the panel (Adam's request). Return no longer stops the timer. Editing past entries stays in M4.
-- [ ] Fix: the panel is anchored to the menu bar item's right edge, which never moves because status items grow leftwards. It no longer drifts when a pomodoro ends or jumps while the description is edited.
+- [ ] Fix: the panel is a menu-style dropdown (D24): no arrow, placed once under the item when opened, top-left corner pinned while open. It must not move when a pomodoro ends or while the description is edited.
 - [x] Multi-Mac (decision D4): each Mac shows its own popup, and closes it when synced data shows the phase has been handled elsewhere. Unit tested; the real two-Mac check is part of the deferred M6 sync test (D18).
 
 **Done when:** a full 4-block pomodoro cycle works end to end, the popup is impossible to miss on every screen and Space, and the tests pass.
@@ -219,6 +219,7 @@ Goal: an app you install once and forget about.
 | D21 | 2026-09-24 | `PomodoroSession` gains `runID` (groups one run) and `endedAt` (nil = active phase). | Long breaks need a count of completed blocks per run. `endedAt` is how another Mac learns a phase was handled so it can close its popup (D4). Free now: production was never deployed. |
 | D22 | 2026-09-24 | Pomodoro and timer rules: "End pomodoro" also stops the timer. Stopping the timer ends the run (a block cut short doesn't count). Starting with pomodoro off ends the run. Starting with pomodoro on during a break starts the next block. Switching task mid-block keeps the block. | Predictable: pomodoro never runs without you tracking, and tracking is never silently stopped except by a break (configurable). |
 | D23 | 2026-09-24 | `AppDelegate` owns one refresh loop: every second (aligned to the displayed clock) and after every save it resolves duplicates, runs the pomodoro check, and redraws the menu bar. `PomodoroService` takes an injectable clock for its popup actions. | One source of timing. Wake from sleep and CloudKit imports need no special handling because every tick re-reads state. The clock makes button actions testable in simulated time. |
+| D24 | 2026-09-24 | The panel is our own borderless `NSPanel` dropdown instead of an `NSPopover`: placed once under the item when opened (left-aligned, clamped to the screen), top-left corner pinned while open, closes on outside click or Esc, and the item is highlighted while open. | `NSPopover` follows its anchor as the item's width changes with the title, so it jumped while typing and drifted when a pomodoro ended. Anchoring to the right edge still moved and clipped. A pinned dropdown behaves like the system menus and Toggl. |
 
 ## Open questions
 
