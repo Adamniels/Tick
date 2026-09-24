@@ -25,8 +25,8 @@ Status legend: ⬜ not started · 🟨 in progress · ✅ done
 | 2 | The popup and pomodoro | ✅ |
 | 3 | Reminders | ✅ |
 | 4 | Main window: entries | ✅ |
-| 5 | Statistics | 🟨 |
-| 6 | Polish and install | ⬜ |
+| 5 | Statistics | ✅ |
+| 6 | Polish and install | 🟨 |
 | 7 | Later: calendar view, Toggl import | ⬜ |
 
 ---
@@ -179,15 +179,15 @@ Goal: see where the time goes.
 
 - [x] Period picker: today, this week, this month, custom range. The previous period is compared at the same point in time (D32). Pure `StatsPeriod`, unit tested (Monday-first weeks, month lengths, reversed custom dates).
 - [x] Aggregation as pure functions with unit tests (`Statistics.compute`): clip entries to the period, count the running entry up to now, split entries across midnight for per-day data, a "No project" bucket, archived projects included, overlap as summed minus covered time (D31).
-- [ ] Header: total time in the period, change against the previous period, and the overlap notice.
-- [ ] Charts (Swift Charts, project colors, archived projects included): time per project, time per tag (D30, with footnote), time per day stacked by project, and completed pomodoros per day.
+- [x] Header: total time in the period, change against the previous period, and the overlap notice.
+- [x] Charts (Swift Charts, project colors, archived projects included): time per project, time per tag (D30, with footnote), time per day stacked by project, and completed pomodoros per day.
 - [x] Resolve open question Q1 (tag time counting) before building the tag chart. (D30; Q2 resolved as D31.)
 
 ### Manual verification (Adam)
-- [ ] Statistics (main window) shows this week: total, comparison line, and the four charts in project colors.
-- [ ] Switch Today, This week, This month and Custom; the numbers change sensibly.
-- [ ] A period with an overlapping manual entry shows the orange overlap notice.
-- [ ] Spot-check: one day's total in Statistics (Today) matches the day total in Entries.
+- [x] Statistics (main window) shows this week: total, comparison line, and the four charts in project colors.
+- [x] Switch Today, This week, This month and Custom; the numbers change sensibly.
+- [x] A period with an overlapping manual entry shows the orange overlap notice.
+- [x] Spot-check: one day's total in Statistics (Today) matches the day total in Entries.
 
 **Done when:** the numbers match a manual calculation for a sample week, and the tests pass.
 
