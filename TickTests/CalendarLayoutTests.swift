@@ -94,3 +94,25 @@ struct CalendarLayoutTests {
         #expect(result(.resizeEnd(start: at(23), end: at(23, 30)), delta: 3 * 3600) == (at(23), day.end))
     }
 }
+
+struct CalendarBlockHeightTests {
+    let t0 = TestCalendar.date(21, 9)
+
+    @Test func heightIsExactlyTheDuration() {
+        #expect(CalendarLayout.blockHeight(from: t0, to: t0 + 3600, hourHeight: 60) == 60)
+        #expect(CalendarLayout.blockHeight(from: t0, to: t0 + 300, hourHeight: 60) == 5)
+    }
+
+    @Test func shortEntriesGetTheFiveMinuteHeight() {
+        #expect(CalendarLayout.blockHeight(from: t0, to: t0 + 30, hourHeight: 60) == 5)
+        #expect(CalendarLayout.blockHeight(from: t0, to: t0 + 30, hourHeight: 120) == 10)
+    }
+
+    @Test func backToBackEntriesNeverOverlap() {
+        // A 5-minute entry followed directly by another: the first block ends where the second starts.
+        let firstBottom = CalendarLayout.offset(of: t0, from: TestCalendar.date(21, 0), hourHeight: 60)
+            + CalendarLayout.blockHeight(from: t0, to: t0 + 300, hourHeight: 60)
+        let secondTop = CalendarLayout.offset(of: t0 + 300, from: TestCalendar.date(21, 0), hourHeight: 60)
+        #expect(firstBottom == secondTop)
+    }
+}

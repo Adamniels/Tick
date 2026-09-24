@@ -81,6 +81,13 @@ nonisolated enum CalendarLayout {
         dayStart + TimeInterval(offset / hourHeight * 3600)
     }
 
+    /// A block's height: exactly its duration, but at least the minimum duration's height, so very
+    /// short entries stay visible and can only extend a little past their end (never past 5 minutes).
+    static func blockHeight(from start: Date, to end: Date, hourHeight: CGFloat) -> CGFloat {
+        let exact = CGFloat(end.timeIntervalSince(start) / 3600) * hourHeight
+        return max(exact, CGFloat(minimumDuration / 3600) * hourHeight)
+    }
+
     static func duration(ofDistance distance: CGFloat, hourHeight: CGFloat) -> TimeInterval {
         TimeInterval(distance / hourHeight * 3600)
     }
