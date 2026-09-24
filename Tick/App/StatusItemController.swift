@@ -2,15 +2,10 @@ import AppKit
 import SwiftData
 import SwiftUI
 
-/// Owns the menu bar item and its dropdown panel (decisions D16, D24). `AppDelegate` decides when to redraw.
-final class StatusItemController: NSObject {
+/// Owns the menu bar item and its popover panel (decisions D16, D24). `AppDelegate` decides when to redraw.
+final class StatusItemController: NSObject, NSPopoverDelegate {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-    private let panel = MenuBarWindow()
-    private var hostingView: NSHostingView<AnyView>?
-    private var resignObserver: NSObjectProtocol?
-    private var lastClosed = Date.distantPast
-    /// Where the open panel's top-left corner is pinned, in screen coordinates.
-    private var topLeft: NSPoint?
+    private let popover = NSPopover()
 
     init(
         modelContainer: ModelContainer,
@@ -20,33 +15,21 @@ final class StatusItemController: NSObject {
     ) {
         super.init()
 
-        let content = MenuBarPanel(storageError: storageError) { [weak self] in
-            self?.close()
+        let panel = MenuBarPanel(storageError: storageError) { [weak self] in
+            self?.popover.performClose(nil)
             onOpenMainWindow()
         }
         .modelContainer(modelContainer)
         .environment(pomodoro)
-        .fixedSize()
-        .background(.regularMaterial, in: .rect(cornerRadius: 12))
-        .onGeometryChange(for: CGSize.self) { $0.size } action: { [weak self] size in
-            self?.resize(to: size)
-        }
-        let hostingView = NSHostingView(rootView: AnyView(content))
-        // The window is sized explicitly from the measured content, never by the hosting view.
-        hostingView.sizingOptions = []
-        panel.contentView = hostingView
-        panel.onEscape = { [weak self] in self?.close() }
-        self.hostingView = hostingView
-
-        resignObserver = NotificationCenter.default.addObserver(
-            forName: NSWindow.didResignKeyNotification, object: panel, queue: .main
-        ) { [weak self] _ in
-            MainActor.assumeIsolated { self?.close() }
-        }
+        let hostingController = NSHostingController(rootView: panel)
+        hostingController.sizingOptions = [.preferredContentSize]
+        popover.contentViewController = hostingController
+        popover.behavior = .transient
+        popover.delegate = self
 
         if let button = statusItem.button {
             button.target = self
-            button.action = #selector(togglePanel)
+            button.action = #selector(togglePopover)
             button.imagePosition = .imageLeading
             button.font = .monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
         }
@@ -75,87 +58,21 @@ final class StatusItemController: NSObject {
         }
     }
 
-    @objc private func togglePanel() {
-        if panel.isVisible {
-            close()
-        } else if Date.now.timeIntervalSince(lastClosed) > 0.3 {
-            // Guard: a click on the item can first close the panel by taking key status,
-            // and must not reopen it in the same click.
-            open()
+    @objc private func togglePopover() {
+        if popover.isShown {
+            popover.performClose(nil)
+        } else if let button = statusItem.button {
+            // A popover follows its anchor, and the item's width follows its title. Locking the
+            // width while open keeps the popover still; it's released when the popover closes (D24).
+            statusItem.length = button.frame.width
+            NSApp.activate()
+            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            popover.contentViewController?.view.window?.makeKey()
         }
     }
 
-    /// Placed once, like a menu, on the screen whose menu bar was clicked (D24).
-    /// While open, only the height changes and the top-left corner stays pinned.
-    private func open() {
-        guard let button = statusItem.button, let buttonWindow = button.window,
-              let screen = buttonWindow.screen, let hostingView else { return }
-        let itemFrame = buttonWindow.convertToScreen(button.convert(button.bounds, to: nil))
-        let size = hostingView.fittingSize
-        topLeft = DropdownLayout.topLeft(below: itemFrame, width: size.width, in: screen.visibleFrame)
-        resize(to: size)
-
-        NSApp.activate()
-        panel.makeKeyAndOrderFront(nil)
-        button.highlight(true)
-    }
-
-    private func close() {
-        guard panel.isVisible else { return }
-        panel.orderOut(nil)
-        lastClosed = .now
-        statusItem.button?.highlight(false)
-    }
-
-    /// Sets the whole frame explicitly, so the pinned corner never depends on how AppKit resizes.
-    private func resize(to size: CGSize) {
-        guard let topLeft, size.width > 0, size.height > 0 else { return }
-        panel.setFrame(DropdownLayout.frame(topLeft: topLeft, size: size), display: true)
-        panel.invalidateShadow()
-    }
-}
-
-/// The dropdown under the menu bar item: borderless and menu-like. Positioned by `StatusItemController`.
-final class MenuBarWindow: NSPanel {
-    var onEscape: (() -> Void)?
-
-    init() {
-        super.init(contentRect: .zero, styleMask: [.borderless], backing: .buffered, defer: true)
-        level = .popUpMenu
-        collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient]
-        isOpaque = false
-        backgroundColor = .clear
-        hasShadow = true
-        hidesOnDeactivate = false
-        isReleasedWhenClosed = false
-        animationBehavior = .none
-    }
-
-    override var canBecomeKey: Bool { true }
-
-    /// Esc closes it, like a menu.
-    override func cancelOperation(_ sender: Any?) {
-        onEscape?()
-    }
-}
-
-/// Placement of the dropdown, as pure geometry in screen coordinates (origin bottom-left,
-/// y up; secondary screens can have negative coordinates).
-nonisolated enum DropdownLayout {
-    static let screenMargin: CGFloat = 8
-    static let gapBelowItem: CGFloat = 4
-
-    /// Just below the menu bar item with left edges aligned, pushed left if it would leave the screen.
-    static func topLeft(below itemFrame: NSRect, width: CGFloat, in visibleFrame: NSRect) -> NSPoint {
-        let rightmostX = visibleFrame.maxX - screenMargin - width
-        let x = max(visibleFrame.minX + screenMargin, min(itemFrame.minX, rightmostX))
-        let y = min(itemFrame.minY, visibleFrame.maxY) - gapBelowItem
-        return NSPoint(x: x, y: y)
-    }
-
-    /// The frame for `size` hanging down from `topLeft`.
-    static func frame(topLeft: NSPoint, size: CGSize) -> NSRect {
-        NSRect(x: topLeft.x, y: topLeft.y - size.height, width: size.width, height: size.height)
+    func popoverDidClose(_ notification: Notification) {
+        statusItem.length = NSStatusItem.variableLength
     }
 }
 
