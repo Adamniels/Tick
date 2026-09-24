@@ -115,6 +115,8 @@ Goal: the unmissable popup exists, and pomodoro uses it.
 - [ ] Breaks stop the time entry, and the next work block continues it as a new entry with `isPomodoro = true` (decision D8b). Setting to keep the entry running instead.
 - [ ] Menu bar shows the phase and remaining time, for example `🍅 18:42`, or a break symbol during breaks.
 - [ ] If `plannedEnd` passed while the Mac was asleep, show the popup on wake. (Covered by the per-second check; verify manually.)
+- [ ] Running entry: the description is editable in the panel (Adam's request). Return no longer stops the timer. Editing past entries stays in M4.
+- [ ] Fix: an open panel re-anchors when the menu bar item changes width (it drifted left when a pomodoro ended).
 - [ ] Multi-Mac (decision D4): each Mac shows its own popup, and closes it when synced data shows the phase has been handled elsewhere. Unit tested; the real two-Mac check joins the M6 sync test.
 
 **Done when:** a full 4-block pomodoro cycle works end to end, the popup is impossible to miss on every screen and Space, and the tests pass.

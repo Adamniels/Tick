@@ -6,6 +6,7 @@ import SwiftUI
 final class StatusItemController: NSObject {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private let popover = NSPopover()
+    private var lastButtonWidth: CGFloat = 0
 
     init(
         modelContainer: ModelContainer,
@@ -54,6 +55,21 @@ final class StatusItemController: NSObject {
             icon?.isTemplate = true
             button.image = icon
             button.title = ""
+        }
+        repositionPopoverIfNeeded()
+    }
+
+    /// The item's width follows its title (for example when a pomodoro ends), and an open
+    /// popover doesn't follow by itself. Runs after layout so the new width is known.
+    private func repositionPopoverIfNeeded() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, let button = statusItem.button else { return }
+            let width = button.bounds.width
+            guard width != lastButtonWidth else { return }
+            lastButtonWidth = width
+            if popover.isShown {
+                popover.positioningRect = button.bounds
+            }
         }
     }
 

@@ -74,15 +74,17 @@ struct MenuBarPanel: View {
 }
 
 private struct RunningTimerView: View {
-    let entry: TimeEntry
+    @Bindable var entry: TimeEntry
     let onStop: () -> Void
 
     var body: some View {
         HStack(alignment: .center, spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(entry.entryDescription.isEmpty ? "No description" : entry.entryDescription)
-                    .foregroundStyle(entry.entryDescription.isEmpty ? .secondary : .primary)
+                // Editable while running; saved by the context's autosave.
+                TextField("No description", text: $entry.entryDescription)
+                    .textFieldStyle(.plain)
                     .lineLimit(1)
+                    .onChange(of: entry.entryDescription) { entry.updatedAt = .now }
                 if let project = entry.project {
                     HStack(spacing: 4) {
                         ColorDot(hex: project.colorHex)
@@ -97,7 +99,7 @@ private struct RunningTimerView: View {
             }
             Button("Stop", systemImage: "stop.fill", action: onStop)
                 .labelStyle(.iconOnly)
-                .keyboardShortcut(.defaultAction)
+                .buttonStyle(.borderedProminent)
                 .help("Stop timer")
         }
     }
