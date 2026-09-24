@@ -19,23 +19,30 @@ struct EntriesView: View {
                 Button("New entry", systemImage: "plus") { editing = .new }
                     .help("Add a manual entry")
             }
-            .sheet(item: $editing) { target in
-                switch target {
-                case .new: EntryEditor(entry: nil)
-                case .existing(let entry): EntryEditor(entry: entry)
-                }
-            }
+            .sheet(item: $editing) { $0.editor }
     }
 }
 
 enum EditTarget: Identifiable {
     case new
+    /// A new entry prefilled with a range, for example from the calendar.
+    case draft(EntryDraft)
     case existing(TimeEntry)
 
     var id: String {
         switch self {
         case .new: "new"
+        case .draft(let draft): "draft-\(draft.start.timeIntervalSinceReferenceDate)"
         case .existing(let entry): entry.id.uuidString
+        }
+    }
+
+    @ViewBuilder
+    var editor: some View {
+        switch self {
+        case .new: EntryEditor(entry: nil)
+        case .draft(let draft): EntryEditor(entry: nil, draft: draft)
+        case .existing(let entry): EntryEditor(entry: entry)
         }
     }
 }

@@ -237,7 +237,7 @@ Goal: see a day like Toggl and fix or add entries directly on a timeline (moved 
 - [ ] Click a block to edit (the M4 editor); right-click for Edit, Continue, Delete.
 - [ ] Drag on empty space to create (editor opens prefilled; Cancel creates nothing); click on empty space for a 30-minute entry.
 - [ ] Drag a block's top or bottom edge to resize, or the whole block to move. Snaps to 5 minutes, minimum 5 minutes. A running entry: start only, not after now. A block crossing midnight: no dragging on the continuing side.
-- [ ] Pure `CalendarLayout` (positions, overlap columns, snapping, drag results with limits), unit tested.
+- [x] Pure `CalendarLayout` (positions, overlap columns, snapping, drag results with limits), unit tested.
 
 ### Manual verification (Adam)
 - [ ] Today looks like the Toggl day view: blocks at the right times, colors, the running entry growing, the now line.

@@ -1,7 +1,8 @@
 import SwiftData
 import SwiftUI
 
-/// Edit an entry, or create a manual one when `entry` is nil. Works on a draft (D28).
+/// Edit an entry, or create a manual one when `entry` is nil (optionally from a prefilled draft,
+/// for example a range dragged in the calendar). Works on a draft (D28).
 struct EntryEditor: View {
     let entry: TimeEntry?
 
@@ -10,9 +11,9 @@ struct EntryEditor: View {
     @State private var draft: EntryDraft
     @State private var saveError: String?
 
-    init(entry: TimeEntry?) {
+    init(entry: TimeEntry?, draft: EntryDraft? = nil) {
         self.entry = entry
-        _draft = State(initialValue: entry.map(EntryDraft.init(entry:)) ?? .newManual(now: .now))
+        _draft = State(initialValue: draft ?? entry.map(EntryDraft.init(entry:)) ?? .newManual(now: .now))
     }
 
     var body: some View {
