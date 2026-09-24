@@ -23,8 +23,8 @@ Status legend: ⬜ not started · 🟨 in progress · ✅ done
 | 0 | Housekeeping | ✅ |
 | 1 | Foundation: models, sync, menu bar timer, projects and tags | ✅ (sync test deferred to M6, D18) |
 | 2 | The popup and pomodoro | ✅ |
-| 3 | Reminders | 🟨 |
-| 4 | Main window: entries | ⬜ |
+| 3 | Reminders | ✅ |
+| 4 | Main window: entries | 🟨 |
 | 5 | Statistics | ⬜ |
 | 6 | Polish and install | ⬜ |
 | 7 | Later: calendar view, Toggl import | ⬜ |
@@ -127,22 +127,22 @@ Goal: the unmissable popup exists, and pomodoro uses it.
 
 Goal: Tick notices when you're not tracking, forgot to stop, or were away.
 
-- [ ] Settings: work hours (weekdays plus start and end time), idle threshold X, forgotten timer threshold Y (default 3 h), presence threshold, away minimum, snooze length, and an on/off switch per reminder.
+- [x] Settings: work hours (weekdays plus start and end time), idle threshold X, forgotten timer threshold Y (default 3 h), presence threshold, away minimum, snooze length, and an on/off switch per reminder.
 - [x] Pure `ReminderEvaluator` (inputs: time, running entry, pomodoro status, presence, snoozes) and `WorkHours` (overnight windows, wall-clock times across DST), unit tested. Run from the per-second refresh loop (D23).
 - [x] Presence (decision D5): screen unlocked and last user input less than N minutes ago (`CGEventSource.secondsSinceLastEventType`).
 - [x] **Idle reminder:** no running timer for X minutes, within work hours, user present, no pomodoro active (D25). Popup offers quick start of the 3 most recent distinct entries, **Start new timer** (opens the panel), and **Remind me in N min**. Unit tested.
 - [x] **Forgotten timer:** running longer than Y hours. Popup offers **Still working** (snooze another Y), **Stop at selected time** (time field in the popup, D27), and **Stop now**. Unit tested.
 - [x] **Sleep and lock:** `AwayTracker` over sleep, lock and display sleep (D26). On return, if a timer ran through an away period longer than the minimum, popup: **Remove away time** (split around the gap) / **Keep the time** / **Stop at departure**. Unit tested.
 - [x] Popups close themselves when their reason is resolved elsewhere (timer started or stopped, possibly on another Mac). Unit tested.
-- [ ] Reminders never interrupt an active pomodoro popup. They queue behind it. (Uses the M2 overlay queue; exercise manually.)
+- [x] Reminders never interrupt an active pomodoro popup. They queue behind it. (Uses the M2 overlay queue; exercise manually.)
 
 ### Manual verification (Adam)
 Set short thresholds first (Settings → Reminders: idle 1 min, forgotten 1 h is the minimum, away 1 min) and make today a work day with hours covering now.
-- [ ] Idle: stop all timers, keep using the Mac; after the threshold the popup asks what you're working on. Try a quick-start button, then **Start new timer** (the panel opens), then **Remind me in N min**.
-- [ ] Idle does not appear when you're away from the keyboard longer than the presence setting, outside work hours, or during a pomodoro break.
-- [ ] Away: with a timer running, lock the screen (Ctrl+Cmd+Q) for more than the minimum, unlock: the popup offers to remove the away time. Check the entries in the panel afterwards.
-- [ ] Forgotten: optional (the minimum is 1 h). Covered by unit tests.
-- [ ] Settings: work day toggles and start and end times save and take effect.
+- [x] Idle: stop all timers, keep using the Mac; after the threshold the popup asks what you're working on. Try a quick-start button, then **Start new timer** (the panel opens), then **Remind me in N min**.
+- [x] Idle does not appear when you're away from the keyboard longer than the presence setting, outside work hours, or during a pomodoro break.
+- [x] Away: with a timer running, lock the screen (Ctrl+Cmd+Q) for more than the minimum, unlock: the popup offers to remove the away time. Check the entries in the panel afterwards.
+- [x] Forgotten: covered by unit tests (manual test optional, the minimum threshold is 1 h).
+- [x] Settings: work day toggles and start and end times save and take effect.
 
 **Done when:** each reminder triggers correctly in manual tests, and the evaluator and service tests pass.
 
