@@ -4,4 +4,5 @@ import KeyboardShortcuts
 extension KeyboardShortcuts.Name {
     static let toggleTimer = Self("toggleTimer")
     static let openPanel = Self("openPanel")
+    static let openMainWindow = Self("openMainWindow")
 }

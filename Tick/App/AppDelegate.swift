@@ -46,7 +46,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.mainWindowController = mainWindowController
         self.statusItemController = statusItemController
 
-        registerShortcuts(pomodoro: pomodoro, statusItemController: statusItemController)
+        registerShortcuts(
+            pomodoro: pomodoro, statusItemController: statusItemController, mainWindowController: mainWindowController
+        )
 
         saveObserver = NotificationCenter.default.addObserver(
             forName: ModelContext.didSave, object: nil, queue: .main
@@ -63,7 +65,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// Start or stop: stops the running timer, or continues the most recent entry (D33).
-    private func registerShortcuts(pomodoro: PomodoroService, statusItemController: StatusItemController) {
+    private func registerShortcuts(
+        pomodoro: PomodoroService,
+        statusItemController: StatusItemController,
+        mainWindowController: MainWindowController
+    ) {
         let context = modelContainer.mainContext
         KeyboardShortcuts.onKeyUp(for: .toggleTimer) { [weak statusItemController] in
             let timer = TimerService(context: context)
@@ -82,6 +88,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         KeyboardShortcuts.onKeyUp(for: .openPanel) { [weak statusItemController] in
             statusItemController?.openPanel()
+        }
+        KeyboardShortcuts.onKeyUp(for: .openMainWindow) {
+            mainWindowController.show()
         }
     }
 

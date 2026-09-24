@@ -145,6 +145,9 @@ struct SettingsView: View {
                 LabeledContent("Open Tick panel") {
                     KeyboardShortcuts.Recorder(for: .openPanel)
                 }
+                LabeledContent("Open Tick window") {
+                    KeyboardShortcuts.Recorder(for: .openMainWindow)
+                }
             } footer: {
                 Text("Start or stop: stops the running timer, or continues your most recent entry when none is running.")
             }
