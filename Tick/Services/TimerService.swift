@@ -15,9 +15,11 @@ struct TimerService {
 
     /// Only one timer runs at a time: anything running is stopped at `now` first.
     @discardableResult
-    func start(description: String, project: Project?, tags: [Tag], at now: Date = .now) throws -> TimeEntry {
+    func start(
+        description: String, project: Project?, tags: [Tag], isPomodoro: Bool = false, at now: Date = .now
+    ) throws -> TimeEntry {
         try stopRunning(at: now)
-        let entry = TimeEntry(entryDescription: description, start: now)
+        let entry = TimeEntry(entryDescription: description, start: now, isPomodoro: isPomodoro)
         context.insert(entry)
         entry.project = project
         entry.tags = tags
@@ -32,8 +34,18 @@ struct TimerService {
 
     /// Starts a new timer with the same description, project and tags as `entry`.
     @discardableResult
-    func continueEntry(_ entry: TimeEntry, at now: Date = .now) throws -> TimeEntry {
-        try start(description: entry.entryDescription, project: entry.project, tags: entry.tags ?? [], at: now)
+    func continueEntry(_ entry: TimeEntry, isPomodoro: Bool = false, at now: Date = .now) throws -> TimeEntry {
+        try start(
+            description: entry.entryDescription, project: entry.project, tags: entry.tags ?? [],
+            isPomodoro: isPomodoro, at: now
+        )
+    }
+
+    /// The most recently started entry, running or not.
+    func latestEntry() throws -> TimeEntry? {
+        var descriptor = FetchDescriptor<TimeEntry>(sortBy: [SortDescriptor(\.start, order: .reverse)])
+        descriptor.fetchLimit = 1
+        return try context.fetch(descriptor).first
     }
 
     /// Deleting the running entry stops tracking.

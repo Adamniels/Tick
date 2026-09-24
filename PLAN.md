@@ -22,7 +22,7 @@ Status legend: ⬜ not started · 🟨 in progress · ✅ done
 |---|-----------|--------|
 | 0 | Housekeeping | ✅ |
 | 1 | Foundation: models, sync, menu bar timer, projects and tags | ✅ (sync test deferred to M6, D18) |
-| 2 | The popup and pomodoro | ⬜ |
+| 2 | The popup and pomodoro | 🟨 |
 | 3 | Reminders | ⬜ |
 | 4 | Main window: entries | ⬜ |
 | 5 | Statistics | ⬜ |
@@ -97,24 +97,25 @@ Goal: the unmissable popup exists, and pomodoro uses it.
 - [ ] Panels can become key (subclass override) so buttons work immediately; `NSApp.activate` on show.
 - [ ] Esc, clicking outside, and Cmd+W do nothing. The popup closes only via a button.
 - [ ] Rebuild the panels when the screen configuration changes while shown.
-- [ ] A content model (title, message, list of actions) so M2 and M3 reuse one overlay view (`Views/Overlay/`).
+- [x] A content model (title, message, list of actions) so M2 and M3 reuse one overlay view (`Views/Overlay/`). Requests have ids so they can be dismissed from elsewhere and aren't queued twice.
 - [ ] Play the configured sound on show.
 - [ ] Only one overlay at a time. If a second one is requested while one is shown, queue it.
+- [ ] No Return shortcut, and buttons are disabled for the first 0.6 s so a stray click or keypress can't answer the popup (D19).
 - [ ] Manual test checklist: full screen app, other Space, second monitor, while in a video call, while a sheet is open in another app.
 
 ### Settings (first version)
-- [ ] `Settings` scene with local `@AppStorage` values: dim opacity, card size, sound (from system sounds), and a **Test popup** button.
+- [ ] Settings section in the main window (D20) with local `@AppStorage` values: pomodoro durations, dim opacity, card size, sound (from system sounds), and a **Test popup** button.
 
 ### Pomodoro
-- [ ] Phase state machine as a pure type: work → short break, with a long break after every 4th work block; durations from settings (default 25/5/15). Unit tests for the sequence, the long break count, and extensions.
-- [ ] `PomodoroService`: creates `PomodoroSession` records; schedules the next phase end from the synced `plannedEnd` (never a stored countdown).
+- [x] Phase state machine as a pure type: work → short break, with a long break after every 4th work block; durations from settings (default 25/5/15). Unit tests for the sequence, the long break count, and extensions.
+- [x] ☁️ `PomodoroService`: creates `PomodoroSession` records; checks the synced `plannedEnd` every second from the `AppDelegate` refresh loop (D23), never a stored countdown. `PomodoroSession` gains `runID` and `endedAt` (D21). Transition rules are in D22. Unit tested end to end with a spy overlay.
 - [ ] Pomodoro toggle in the panel, remembered between timers (decision D8a).
 - [ ] After a work block, popup: **Start break** / **5 more minutes** / **End pomodoro**.
 - [ ] After a break, popup: **Start next block** / **Extend break 5 min** / **End**.
 - [ ] Breaks stop the time entry, and the next work block continues it as a new entry with `isPomodoro = true` (decision D8b). Setting to keep the entry running instead.
 - [ ] Menu bar shows the phase and remaining time, for example `🍅 18:42`, or a break symbol during breaks.
-- [ ] If `plannedEnd` passed while the Mac was asleep, show the popup on wake.
-- [ ] Multi-Mac (decision D4): each Mac shows its own popup, and closes it when synced data shows the phase has been handled elsewhere.
+- [ ] If `plannedEnd` passed while the Mac was asleep, show the popup on wake. (Covered by the per-second check; verify manually.)
+- [ ] Multi-Mac (decision D4): each Mac shows its own popup, and closes it when synced data shows the phase has been handled elsewhere. Unit tested; the real two-Mac check joins the M6 sync test.
 
 **Done when:** a full 4-block pomodoro cycle works end to end, the popup is impossible to miss on every screen and Space, and the tests pass.
 
@@ -211,6 +212,11 @@ Goal: an app you install once and forget about.
 | D16 | 2026-09-24 | The menu bar item is an `NSStatusItem` with an `NSPopover`, and the main window an `NSWindow` with `NSHostingController`, all owned by `AppDelegate`. The SwiftUI views are unchanged. D12 is updated: duplicates are resolved in the status item's refresh (every save plus a one-second tick that fetches the running entry). | Adam's test showed the `MenuBarExtra` label never updating from its `@Query`. AppKit gives full control of the title and a non-template colored dot. `openWindow` doesn't work outside SwiftUI scenes, so the main window moved to AppKit as well. The per-second fetch is trivial and also picks up CloudKit imports. |
 | D17 | 2026-09-24 | M1 panel entries: ▶ shows only on hover; right-click → Continue / Delete, without confirmation. | One stray click created entries that couldn't be removed until M4. A context-menu delete is already a deliberate two-step action. |
 | D18 | 2026-09-24 | M1 is closed without the two-Mac sync test. It moves to M6, before the install checklist. | Only one Mac is available now. Sync logic is unit tested, and M2 to M5 don't depend on it. Risk: a sync problem is found late. The quick single-Mac CloudKit Console check reduces that risk. |
+| D19 | 2026-09-24 | The popup has no keyboard shortcut, and its buttons ignore input for 0.6 s after appearing. Cmd+Q is not blocked. | The popup activates Tick while you may be typing or clicking elsewhere. A stray Return or click must not answer it. Blocking quit would be hostile. |
+| D20 | 2026-09-24 | Settings are a section of the main window, not a SwiftUI `Settings` scene. | The brief lists settings in the main window. A `Settings` scene can't be opened reliably from the AppKit popover (same reason as D16). |
+| D21 | 2026-09-24 | `PomodoroSession` gains `runID` (groups one run) and `endedAt` (nil = active phase). | Long breaks need a count of completed blocks per run. `endedAt` is how another Mac learns a phase was handled so it can close its popup (D4). Free now: production was never deployed. |
+| D22 | 2026-09-24 | Pomodoro and timer rules: "End pomodoro" also stops the timer. Stopping the timer ends the run (a block cut short doesn't count). Starting with pomodoro off ends the run. Starting with pomodoro on during a break starts the next block. Switching task mid-block keeps the block. | Predictable: pomodoro never runs without you tracking, and tracking is never silently stopped except by a break (configurable). |
+| D23 | 2026-09-24 | `AppDelegate` owns one refresh loop: every second (aligned to the displayed clock) and after every save it resolves duplicates, runs the pomodoro check, and redraws the menu bar. `PomodoroService` takes an injectable clock for its popup actions. | One source of timing. Wake from sleep and CloudKit imports need no special handling because every tick re-reads state. The clock makes button actions testable in simulated time. |
 
 ## Open questions
 
@@ -223,3 +229,4 @@ Each model change must be deployed via CloudKit Console → Deploy Schema Change
 | Date | Change | Deployed to production |
 |------|--------|------------------------|
 | — | Initial schema (M1) | ⬜ |
+| 2026-09-24 | `PomodoroSession`: added `runID: UUID`, `endedAt: Date?` (M2, D21). Production has never been deployed, so this folds into the first deploy. | ⬜ |

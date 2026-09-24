@@ -20,18 +20,29 @@ struct MenuBarTitleTests {
     }
 
     @Test func idleTicksEverySecond() {
-        #expect(MenuBarTitle.delayUntilNextTick(start: nil, now: .now) == 1)
+        #expect(MenuBarTitle.delayUntilNextTick(reference: nil, now: .now) == 1)
     }
 
     @Test func runningTicksJustAfterTheNextWholeSecond() {
         let start = Date(timeIntervalSinceReferenceDate: 1000)
-        let delay = MenuBarTitle.delayUntilNextTick(start: start, now: start + 10.75)
+        let delay = MenuBarTitle.delayUntilNextTick(reference: start, now: start + 10.75)
         #expect(abs(delay - 0.27) < 0.0001)
     }
 
     @Test func startInTheFutureStillGivesAPositiveDelay() {
         let start = Date(timeIntervalSinceReferenceDate: 1000)
-        let delay = MenuBarTitle.delayUntilNextTick(start: start, now: start - 0.25)
+        let delay = MenuBarTitle.delayUntilNextTick(reference: start, now: start - 0.25)
         #expect(delay > 0 && delay <= 1.02)
+    }
+}
+
+struct PomodoroTitleTests {
+    @Test func workShowsTomatoCountdownAndName() {
+        #expect(MenuBarTitle.pomodoroText(phase: .work, remaining: 1122, name: "Operation Rollout")
+            == "🍅 18:42 Operation Rollout")
+    }
+
+    @Test func breakShowsCupAndCountdownOnly() {
+        #expect(MenuBarTitle.pomodoroText(phase: .shortBreak, remaining: 252, name: "Operation Rollout") == "☕ 4:12")
     }
 }

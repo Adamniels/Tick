@@ -13,6 +13,7 @@ struct StartTimerForm: View {
     @State private var description = ""
     @State private var project: Project?
     @State private var selectedTags: Set<Tag> = []
+    @AppStorage(AppSettings.Key.pomodoroEnabled) private var usePomodoro = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -26,29 +27,42 @@ struct StartTimerForm: View {
                     .help("Start timer")
             }
 
-            Picker("Project", selection: $project) {
-                Text("No project").tag(Project?.none)
-                ForEach(projects) { project in
-                    Label {
-                        Text(project.name)
-                    } icon: {
-                        Image(nsImage: .dot(hex: project.colorHex))
-                    }
-                    .tag(Optional(project))
-                }
+            HStack {
+                projectPicker
+                Toggle("🍅 Pomodoro", isOn: $usePomodoro)
+                    .toggleStyle(.checkbox)
+                    .help("Run this timer in pomodoro blocks")
             }
 
             if !tags.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 6) {
-                        ForEach(tags) { tag in
-                            TagChip(tag: tag, isSelected: selectedTags.contains(tag)) {
-                                if selectedTags.contains(tag) {
-                                    selectedTags.remove(tag)
-                                } else {
-                                    selectedTags.insert(tag)
-                                }
-                            }
+                tagChips
+            }
+        }
+    }
+
+    private var projectPicker: some View {
+        Picker("Project", selection: $project) {
+            Text("No project").tag(Project?.none)
+            ForEach(projects) { project in
+                Label {
+                    Text(project.name)
+                } icon: {
+                    Image(nsImage: .dot(hex: project.colorHex))
+                }
+                .tag(Optional(project))
+            }
+        }
+    }
+
+    private var tagChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                ForEach(tags) { tag in
+                    TagChip(tag: tag, isSelected: selectedTags.contains(tag)) {
+                        if selectedTags.contains(tag) {
+                            selectedTags.remove(tag)
+                        } else {
+                            selectedTags.insert(tag)
                         }
                     }
                 }

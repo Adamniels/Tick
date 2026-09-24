@@ -5,10 +5,12 @@ import SwiftUI
 /// The main window, created on first use and reused afterwards (decision D16).
 final class MainWindowController {
     private let modelContainer: ModelContainer
+    private let onTestPopup: () -> Void
     private var window: NSWindow?
 
-    init(modelContainer: ModelContainer) {
+    init(modelContainer: ModelContainer, onTestPopup: @escaping () -> Void) {
         self.modelContainer = modelContainer
+        self.onTestPopup = onTestPopup
     }
 
     func show() {
@@ -19,7 +21,9 @@ final class MainWindowController {
     }
 
     private func makeWindow() -> NSWindow {
-        let hostingController = NSHostingController(rootView: MainWindow().modelContainer(modelContainer))
+        let hostingController = NSHostingController(
+            rootView: MainWindow(onTestPopup: onTestPopup).modelContainer(modelContainer)
+        )
         hostingController.sceneBridgingOptions = [.toolbars, .title]
         let window = NSWindow(contentViewController: hostingController)
         window.title = "Tick"
