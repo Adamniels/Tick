@@ -22,8 +22,8 @@ Status legend: ⬜ not started · 🟨 in progress · ✅ done
 |---|-----------|--------|
 | 0 | Housekeeping | ✅ |
 | 1 | Foundation: models, sync, menu bar timer, projects and tags | ✅ (sync test deferred to M6, D18) |
-| 2 | The popup and pomodoro | 🟨 |
-| 3 | Reminders | ⬜ |
+| 2 | The popup and pomodoro | ✅ |
+| 3 | Reminders | 🟨 |
 | 4 | Main window: entries | ⬜ |
 | 5 | Statistics | ⬜ |
 | 6 | Polish and install | ⬜ |
@@ -116,7 +116,7 @@ Goal: the unmissable popup exists, and pomodoro uses it.
 - [x] Menu bar shows the phase and remaining time, for example `🍅 18:42`, or a break symbol during breaks.
 - [x] If `plannedEnd` passed while the Mac was asleep, show the popup on wake. (Covered by the per-second check; verify manually.)
 - [x] Running entry: the description is editable in the panel (Adam's request). Return no longer stops the timer. Editing past entries stays in M4. (Now applied on Return rather than per keystroke, D24.)
-- [ ] Fix: the panel must not move while open (D24): the popover points at an invisible anchor window placed over the item when it opens, not at the item itself. The running description is applied on Return (or focus loss, or closing the panel).
+- [x] Fix: the panel must not move while open (D24): the popover points at an invisible anchor window placed over the item when it opens, not at the item itself. The running description is applied on Return (or focus loss, or closing the panel).
 - [x] Multi-Mac (decision D4): each Mac shows its own popup, and closes it when synced data shows the phase has been handled elsewhere. Unit tested; the real two-Mac check is part of the deferred M6 sync test (D18).
 
 **Done when:** a full 4-block pomodoro cycle works end to end, the popup is impossible to miss on every screen and Space, and the tests pass.
