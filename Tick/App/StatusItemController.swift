@@ -3,10 +3,13 @@ import SwiftData
 import SwiftUI
 
 /// Owns the menu bar item and its popover panel (decisions D16, D24). `AppDelegate` decides when to redraw.
-final class StatusItemController: NSObject {
+final class StatusItemController: NSObject, NSPopoverDelegate {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private let popover = NSPopover()
-    private var lastButtonWidth: CGFloat = 0
+    /// An invisible window placed over the item when the popover opens. The popover points at it
+    /// instead of the item, so it stays put while the item's width changes (D24).
+    private let anchorWindow = StatusItemController.makeAnchorWindow()
+    private var lastClosed = Date.distantPast
 
     init(
         modelContainer: ModelContainer,
@@ -26,6 +29,7 @@ final class StatusItemController: NSObject {
         hostingController.sizingOptions = [.preferredContentSize]
         popover.contentViewController = hostingController
         popover.behavior = .transient
+        popover.delegate = self
 
         if let button = statusItem.button {
             button.target = self
@@ -56,32 +60,45 @@ final class StatusItemController: NSObject {
             button.image = icon
             button.title = ""
         }
-        repositionPopoverIfNeeded()
-    }
-
-    /// An open popover doesn't follow the item when its width changes (for example when a
-    /// pomodoro ends). The description is applied on Return (D24), so this happens only on
-    /// such one-off changes, not while typing. Runs after layout so the new width is known.
-    private func repositionPopoverIfNeeded() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self, let button = statusItem.button else { return }
-            let width = button.bounds.width
-            guard width != lastButtonWidth else { return }
-            lastButtonWidth = width
-            if popover.isShown {
-                popover.positioningRect = button.bounds
-            }
-        }
     }
 
     @objc private func togglePopover() {
         if popover.isShown {
             popover.performClose(nil)
-        } else if let button = statusItem.button {
-            NSApp.activate()
-            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-            popover.contentViewController?.view.window?.makeKey()
+        } else if Date.now.timeIntervalSince(lastClosed) > 0.3 {
+            // Guard: clicking the item closes the transient popover first (the anchor isn't the
+            // item), and that same click must not reopen it.
+            open()
         }
+    }
+
+    private func open() {
+        guard let button = statusItem.button, let buttonWindow = button.window,
+              let anchorView = anchorWindow.contentView else { return }
+        let itemFrame = buttonWindow.convertToScreen(button.convert(button.bounds, to: nil))
+        anchorWindow.setFrame(itemFrame, display: false)
+        anchorWindow.orderFrontRegardless()
+
+        NSApp.activate()
+        popover.show(relativeTo: anchorView.bounds, of: anchorView, preferredEdge: .minY)
+        popover.contentViewController?.view.window?.makeKey()
+    }
+
+    func popoverDidClose(_ notification: Notification) {
+        anchorWindow.orderOut(nil)
+        lastClosed = .now
+    }
+
+    private static func makeAnchorWindow() -> NSWindow {
+        let window = NSWindow(contentRect: .zero, styleMask: [.borderless], backing: .buffered, defer: true)
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        window.hasShadow = false
+        window.ignoresMouseEvents = true  // Clicks reach the menu bar item underneath.
+        window.level = .statusBar
+        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient]
+        window.isReleasedWhenClosed = false
+        return window
     }
 }
 
