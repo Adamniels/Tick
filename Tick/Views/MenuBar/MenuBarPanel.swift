@@ -27,6 +27,7 @@ struct MenuBarPanel: View {
             let session = activeSessions.first
             if let entry = running.first {
                 RunningTimerView(entry: entry) { perform { try $0.stop() } }
+                    .id(entry.id)  // Fresh edit state per entry; a pending edit lands on its own entry.
             } else if session?.phaseValue.isBreak != true {
                 StartTimerForm { description, project, tags in
                     perform { try $0.start(description: description, project: project, tags: tags, usePomodoro: usePomodoro) }
@@ -74,17 +75,27 @@ struct MenuBarPanel: View {
 }
 
 private struct RunningTimerView: View {
-    @Bindable var entry: TimeEntry
+    let entry: TimeEntry
     let onStop: () -> Void
+
+    /// Edits are applied on Return, when focus leaves, or when the panel closes, not per keystroke,
+    /// so the menu bar title (and the popover anchored to it) doesn't change while typing (D24).
+    @State private var draft = ""
+    @FocusState private var isEditing: Bool
 
     var body: some View {
         HStack(alignment: .center, spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
-                // Editable while running; saved by the context's autosave.
-                TextField("No description", text: $entry.entryDescription)
+                TextField("No description", text: $draft)
                     .textFieldStyle(.plain)
                     .lineLimit(1)
-                    .onChange(of: entry.entryDescription) { entry.updatedAt = .now }
+                    .focused($isEditing)
+                    .onSubmit(apply)
+                    .onChange(of: isEditing) { _, editing in if !editing { apply() } }
+                    .onDisappear(perform: apply)
+                    .onAppear { draft = entry.entryDescription }
+                    // Follow changes synced from another Mac, unless mid-edit.
+                    .onChange(of: entry.entryDescription) { _, new in if !isEditing { draft = new } }
                 if let project = entry.project {
                     HStack(spacing: 4) {
                         ColorDot(hex: project.colorHex)
@@ -97,10 +108,20 @@ private struct RunningTimerView: View {
                 Text(DurationFormat.clock(entry.duration(at: context.date)))
                     .font(.title3.monospacedDigit())
             }
-            Button("Stop", systemImage: "stop.fill", action: onStop)
-                .labelStyle(.iconOnly)
-                .buttonStyle(.borderedProminent)
-                .help("Stop timer")
+            Button("Stop", systemImage: "stop.fill") {
+                apply()
+                onStop()
+            }
+            .labelStyle(.iconOnly)
+            .buttonStyle(.borderedProminent)
+            .help("Stop timer")
         }
+    }
+
+    private func apply() {
+        let trimmed = draft.trimmingCharacters(in: .whitespaces)
+        guard trimmed != entry.entryDescription else { return }
+        entry.entryDescription = trimmed
+        entry.updatedAt = .now
     }
 }

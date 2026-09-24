@@ -3,9 +3,10 @@ import SwiftData
 import SwiftUI
 
 /// Owns the menu bar item and its popover panel (decisions D16, D24). `AppDelegate` decides when to redraw.
-final class StatusItemController: NSObject, NSPopoverDelegate {
+final class StatusItemController: NSObject {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private let popover = NSPopover()
+    private var lastButtonWidth: CGFloat = 0
 
     init(
         modelContainer: ModelContainer,
@@ -25,7 +26,6 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         hostingController.sizingOptions = [.preferredContentSize]
         popover.contentViewController = hostingController
         popover.behavior = .transient
-        popover.delegate = self
 
         if let button = statusItem.button {
             button.target = self
@@ -56,23 +56,32 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
             button.image = icon
             button.title = ""
         }
+        repositionPopoverIfNeeded()
+    }
+
+    /// An open popover doesn't follow the item when its width changes (for example when a
+    /// pomodoro ends). The description is applied on Return (D24), so this happens only on
+    /// such one-off changes, not while typing. Runs after layout so the new width is known.
+    private func repositionPopoverIfNeeded() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, let button = statusItem.button else { return }
+            let width = button.bounds.width
+            guard width != lastButtonWidth else { return }
+            lastButtonWidth = width
+            if popover.isShown {
+                popover.positioningRect = button.bounds
+            }
+        }
     }
 
     @objc private func togglePopover() {
         if popover.isShown {
             popover.performClose(nil)
         } else if let button = statusItem.button {
-            // A popover follows its anchor, and the item's width follows its title. Locking the
-            // width while open keeps the popover still; it's released when the popover closes (D24).
-            statusItem.length = button.frame.width
             NSApp.activate()
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             popover.contentViewController?.view.window?.makeKey()
         }
-    }
-
-    func popoverDidClose(_ notification: Notification) {
-        statusItem.length = NSStatusItem.variableLength
     }
 }
 
