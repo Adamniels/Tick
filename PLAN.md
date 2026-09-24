@@ -21,7 +21,7 @@ Status legend: ⬜ not started · 🟨 in progress · ✅ done
 | # | Milestone | Status |
 |---|-----------|--------|
 | 0 | Housekeeping | ✅ |
-| 1 | Foundation: models, sync, menu bar timer, projects and tags | ⬜ |
+| 1 | Foundation: models, sync, menu bar timer, projects and tags | 🟨 |
 | 2 | The popup and pomodoro | ⬜ |
 | 3 | Reminders | ⬜ |
 | 4 | Main window: entries | ⬜ |
@@ -50,20 +50,20 @@ Goal: a clean project base before any feature code.
 Goal: a menu bar app that starts and stops a timer, synced via CloudKit, with colored projects and tags.
 
 ### Model and storage
-- [ ] ☁️ Replace `Item` with `Project`, `Tag`, `TimeEntry`, and `PomodoroSession` exactly as in the brief. Delete `Item.swift` and `ContentView.swift`.
-- [ ] `ModelContainer` with `cloudKitDatabase: .private("iCloud.com.adamniels.Tick")`, replacing the temporary `cloudKitDatabase: .none` from M0. Handle container creation errors with a visible message rather than a crash where feasible.
-- [ ] When the app runs as the unit test host, use an in-memory store without CloudKit, so tests never touch real data or iCloud.
-- [ ] `Utilities/Color+Hex.swift`: `Color` ↔ hex string, with unit tests (round trip, invalid input falls back to the default grey).
+- [x] ☁️ Replace `Item` with `Project`, `Tag`, `TimeEntry`, and `PomodoroSession` exactly as in the brief. Delete `Item.swift` and `ContentView.swift`.
+- [x] `ModelContainer` with `cloudKitDatabase: .private("iCloud.com.adamniels.Tick")`, replacing the temporary `cloudKitDatabase: .none` from M0. Handle container creation errors with a visible message rather than a crash where feasible. (On failure the app falls back to an in-memory store and the panel shows a red "Not saving" banner. The store is named `Tick.store`, decision D13.)
+- [x] When the app runs as the unit test host, use an in-memory store without CloudKit, so tests never touch real data or iCloud.
+- [x] `Utilities/Color+Hex.swift`: `Color` ↔ hex string, with unit tests (round trip, invalid input falls back to the default grey).
 
 ### Timer logic
-- [ ] `TimerService`: `start(description:project:tags:)` stops any running entry first; `stop()`; `continue(from:)` copies description, project and tags. Elapsed time is always derived from `start`.
-- [ ] Duplicate running entry resolution (decision D6): when more than one entry has `end == nil`, keep the newest, set each older entry's `end` to the start of the next newer one. Pure function plus unit tests.
-- [ ] Run the resolution on launch and after remote changes arrive (observe the persistent store remote change notification).
+- [x] `TimerService`: `start(description:project:tags:)` stops any running entry first; `stop()`; `continue(from:)` copies description, project and tags. Elapsed time is always derived from `start`.
+- [x] Duplicate running entry resolution (decision D6): when more than one entry has `end == nil`, keep the newest, set each older entry's `end` to the start of the next newer one. Pure function plus unit tests.
+- [ ] Run the resolution on launch and after remote changes arrive. Implemented via the menu bar label's `@Query` of running entries (decision D12). Verify in the two-Mac test.
 
 ### Menu bar
 - [ ] Replace `WindowGroup` with `MenuBarExtra` (`.window` style). No Dock icon.
 - [ ] Label: `● 0:42:13 Operation Rollout` in the project color while running, an icon only when idle. Must update every second. **Risk:** if a `MenuBarExtra` label can't tick or color reliably, fall back to an `NSStatusItem` owned by the app delegate. Decide early in this task.
-- [ ] Panel: description field, project picker (non-archived only), multi-tag picker, start/stop button, pomodoro toggle placeholder (wired in M2).
+- [ ] Panel: description field, project picker (non-archived only), multi-tag picker, start/stop button. (No pomodoro placeholder, decision D15.)
 - [ ] Panel: today's entries with a daily total and a "Continue" action per entry (decision D8c).
 - [ ] Panel: "Open Tick" (main window) and "Quit" buttons.
 
@@ -71,6 +71,14 @@ Goal: a menu bar app that starts and stops a timer, synced via CloudKit, with co
 - [ ] Minimal main window (`Window` scene) with Projects and Tags sections. M4 extends this window.
 - [ ] Create, rename, recolor (`ColorPicker` → hex), archive and unarchive for both projects and tags.
 - [ ] Archived items are hidden from pickers but still shown on existing entries.
+
+### Manual verification (Adam)
+Everything under Menu bar and Projects and tags is implemented, and builds and tests pass. It stays unticked until checked by hand:
+- [ ] Idle menu bar shows the stopwatch icon. No Dock icon.
+- [ ] Running: the label shows a **colored** dot, a clock that ticks every second, and the project name (or description). If the dot is grey/monochrome or the clock freezes, we switch to `NSStatusItem` (the M1 risk).
+- [ ] Panel: start with Return, project picker shows colored dots, tag chips toggle, Stop works, today's list and total update, Continue starts a copy.
+- [ ] "Open Tick" brings the main window to the front. Projects and tags: add (name field is focused), rename, recolor, archive, show archived, unarchive.
+- [ ] Archived project disappears from the panel picker but stays on today's entries.
 
 ### Sync check
 - [ ] Manual test: run debug builds on two Macs with the same iCloud account. Create a project on one, see it on the other. Start a timer on both, confirm the duplicate resolution.
@@ -195,6 +203,10 @@ Goal: an app you install once and forget about.
 | D9 | 2026-09-24 | Progress is tracked in `PLAN.md`. The brief stays in `CLAUDE.md`. | Git-tracked, diffable, and readable by both of us. |
 | D10 | 2026-09-24 | Plan, code, and comments in English. The brief stays in Swedish. | Global convention: English for technical work. |
 | D11 | 2026-09-24 | Swift Testing target for pure logic. UI is tested with manual checklists. | The real bugs live in time math and state machines. |
+| D12 | 2026-09-24 | Duplicate running entries are resolved by the always-alive menu bar label, observing a `@Query` of running entries, instead of the store's remote change notification. | SwiftData doesn't reliably expose that notification. One trigger covers launch, local changes, and CloudKit imports. Resolution is deterministic, so concurrent resolution on two Macs writes the same values. |
+| D13 | 2026-09-24 | The synced store is named `Tick.store`. The template's `default.store` is left untouched (safe to delete by hand). | Avoids migrating the template `Item` schema and avoids deleting files. |
+| D14 | 2026-09-24 | `@Model` types, `ColoredLabel`, and pure utilities (`HexColor`, `DurationFormat`) are `nonisolated`. Services and views stay on MainActor. | Under MainActor default isolation, a custom protocol refining `PersistentModel` otherwise becomes a main-actor-isolated conformance, which SwiftData rejects. Models are bound to their context, not to an actor. |
+| D15 | 2026-09-24 | No disabled pomodoro placeholder in M1. The toggle arrives with M2. | Dead UI. |
 
 ## Open questions
 

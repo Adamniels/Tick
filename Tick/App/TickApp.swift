@@ -1,33 +1,30 @@
-//
-//  TickApp.swift
-//  Tick
-//
-//  Created by Adam Nielsen on 2026-09-24.
-//
-
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 @main
 struct TickApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        // CloudKit is disabled until M1 replaces the template model (Item has no defaults, so CloudKit validation fails).
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false, cloudKitDatabase: .none)
+    private let modelContainer: ModelContainer
+    private let storageError: String?
 
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
+    init() {
+        let result = Persistence.makeContainer()
+        modelContainer = result.container
+        storageError = result.error.map { String(describing: $0) }
+    }
 
     var body: some Scene {
-        WindowGroup {
-            ContentView()
+        MenuBarExtra {
+            MenuBarPanel(storageError: storageError)
+        } label: {
+            MenuBarLabel()
         }
-        .modelContainer(sharedModelContainer)
+        .menuBarExtraStyle(.window)
+        .modelContainer(modelContainer)
+
+        Window("Tick", id: MainWindow.id) {
+            MainWindow()
+        }
+        .defaultLaunchBehavior(.suppressed)
+        .modelContainer(modelContainer)
     }
 }
