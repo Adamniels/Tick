@@ -1,30 +1,14 @@
-import SwiftData
 import SwiftUI
 
+/// The menu bar item, its panel and the main window are AppKit-managed by `AppDelegate`
+/// (decision D16), so the only SwiftUI scene is a placeholder until M2 adds real settings.
 @main
 struct TickApp: App {
-    private let modelContainer: ModelContainer
-    private let storageError: String?
-
-    init() {
-        let result = Persistence.makeContainer()
-        modelContainer = result.container
-        storageError = result.error.map { String(describing: $0) }
-    }
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
-        MenuBarExtra {
-            MenuBarPanel(storageError: storageError)
-        } label: {
-            MenuBarLabel()
+        Settings {
+            EmptyView()
         }
-        .menuBarExtraStyle(.window)
-        .modelContainer(modelContainer)
-
-        Window("Tick", id: MainWindow.id) {
-            MainWindow()
-        }
-        .defaultLaunchBehavior(.suppressed)
-        .modelContainer(modelContainer)
     }
 }

@@ -36,6 +36,12 @@ struct TimerService {
         try start(description: entry.entryDescription, project: entry.project, tags: entry.tags ?? [], at: now)
     }
 
+    /// Deleting the running entry stops tracking.
+    func delete(_ entry: TimeEntry) throws {
+        context.delete(entry)
+        try context.save()
+    }
+
     /// Resolves several running entries, e.g. after starting timers on two Macs (decision D6).
     func resolveDuplicateRunning() throws {
         if Self.resolveDuplicateRunning(try runningEntries()) {

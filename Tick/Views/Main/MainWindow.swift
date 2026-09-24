@@ -2,8 +2,6 @@ import SwiftUI
 
 /// The main window. M1 manages projects and tags; M4 adds entries, M5 statistics.
 struct MainWindow: View {
-    static let id = "main"
-
     enum Section: Hashable {
         case projects, tags
     }

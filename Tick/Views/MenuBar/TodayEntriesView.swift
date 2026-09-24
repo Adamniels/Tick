@@ -4,13 +4,19 @@ import SwiftUI
 /// Today's entries with a daily total (decision D8c).
 struct TodayEntriesView: View {
     let onContinue: (TimeEntry) -> Void
+    let onDelete: (TimeEntry) -> Void
 
     // A fixed recent window filtered in memory, so the view stays correct across midnight
     // without rebuilding the query's date predicate.
     @Query private var recent: [TimeEntry]
+    // A ScrollView has no height of its own in a popover, so it's sized to its measured content.
+    @State private var listHeight: CGFloat = 0
 
-    init(onContinue: @escaping (TimeEntry) -> Void) {
+    private static let maxListHeight: CGFloat = 260
+
+    init(onContinue: @escaping (TimeEntry) -> Void, onDelete: @escaping (TimeEntry) -> Void) {
         self.onContinue = onContinue
+        self.onDelete = onDelete
         var descriptor = FetchDescriptor<TimeEntry>(sortBy: [SortDescriptor(\.start, order: .reverse)])
         descriptor.fetchLimit = 100
         _recent = Query(descriptor)
@@ -36,11 +42,17 @@ struct TodayEntriesView: View {
                     ScrollView {
                         VStack(spacing: 2) {
                             ForEach(today) { entry in
-                                EntryRow(entry: entry, now: context.date) { onContinue(entry) }
+                                EntryRow(
+                                    entry: entry,
+                                    now: context.date,
+                                    onContinue: { onContinue(entry) },
+                                    onDelete: { onDelete(entry) }
+                                )
                             }
                         }
+                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { listHeight = $0 }
                     }
-                    .frame(maxHeight: 260)
+                    .frame(height: min(listHeight, Self.maxListHeight))
                 }
             }
         }
@@ -51,6 +63,9 @@ private struct EntryRow: View {
     let entry: TimeEntry
     let now: Date
     let onContinue: () -> Void
+    let onDelete: () -> Void
+
+    @State private var isHovering = false
 
     var body: some View {
         HStack(spacing: 8) {
@@ -67,11 +82,21 @@ private struct EntryRow: View {
             Text(DurationFormat.clock(entry.duration(at: now)))
                 .monospacedDigit()
                 .foregroundStyle(entry.isRunning ? .primary : .secondary)
+            // Shown only on hover, so a stray click can't start a timer.
             Button("Continue", systemImage: "play.fill", action: onContinue)
                 .labelStyle(.iconOnly)
                 .buttonStyle(.borderless)
                 .help("Continue: start a new timer like this one")
+                .opacity(isHovering ? 1 : 0)
+                .allowsHitTesting(isHovering)
         }
         .padding(.vertical, 3)
+        .contentShape(Rectangle())
+        .onHover { isHovering = $0 }
+        .contextMenu {
+            Button("Continue", action: onContinue)
+            Divider()
+            Button("Delete", role: .destructive, action: onDelete)
+        }
     }
 }

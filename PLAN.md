@@ -58,13 +58,13 @@ Goal: a menu bar app that starts and stops a timer, synced via CloudKit, with co
 ### Timer logic
 - [x] `TimerService`: `start(description:project:tags:)` stops any running entry first; `stop()`; `continue(from:)` copies description, project and tags. Elapsed time is always derived from `start`.
 - [x] Duplicate running entry resolution (decision D6): when more than one entry has `end == nil`, keep the newest, set each older entry's `end` to the start of the next newer one. Pure function plus unit tests.
-- [ ] Run the resolution on launch and after remote changes arrive. Implemented via the menu bar label's `@Query` of running entries (decision D12). Verify in the two-Mac test.
+- [ ] Run the resolution on launch and after remote changes arrive. Implemented in the status item's refresh, on every save and every second (decision D12). Verify in the two-Mac test.
 
 ### Menu bar
-- [ ] Replace `WindowGroup` with `MenuBarExtra` (`.window` style). No Dock icon.
-- [ ] Label: `● 0:42:13 Operation Rollout` in the project color while running, an icon only when idle. Must update every second. **Risk:** if a `MenuBarExtra` label can't tick or color reliably, fall back to an `NSStatusItem` owned by the app delegate. Decide early in this task.
+- [ ] Replace `WindowGroup` with a menu bar item. No Dock icon. `MenuBarExtra` failed (label never updated), so this is now `NSStatusItem` + `NSPopover` owned by `AppDelegate` (decision D16).
+- [ ] Label: `● 0:42:13 Operation Rollout` in the project color while running, an icon only when idle. Must update every second. **Risk hit and resolved:** the `MenuBarExtra` label stayed on the idle icon while running, so we switched to `NSStatusItem` (D16).
 - [ ] Panel: description field, project picker (non-archived only), multi-tag picker, start/stop button. (No pomodoro placeholder, decision D15.)
-- [ ] Panel: today's entries with a daily total and a "Continue" action per entry (decision D8c).
+- [ ] Panel: today's entries with a daily total and a "Continue" action per entry (decision D8c). ▶ shows only on hover, right-click gives Continue / Delete (decision D17). Fixed: the list collapsed to zero height inside the popover.
 - [ ] Panel: "Open Tick" (main window) and "Quit" buttons.
 
 ### Projects and tags
@@ -75,8 +75,8 @@ Goal: a menu bar app that starts and stops a timer, synced via CloudKit, with co
 ### Manual verification (Adam)
 Everything under Menu bar and Projects and tags is implemented, and builds and tests pass. It stays unticked until checked by hand:
 - [ ] Idle menu bar shows the stopwatch icon. No Dock icon.
-- [ ] Running: the label shows a **colored** dot, a clock that ticks every second, and the project name (or description). If the dot is grey/monochrome or the clock freezes, we switch to `NSStatusItem` (the M1 risk).
-- [ ] Panel: start with Return, project picker shows colored dots, tag chips toggle, Stop works, today's list and total update, Continue starts a copy.
+- [ ] Running: the label shows a **colored** dot (grey when the entry has no project), a clock that ticks every second, and the project name (or description). It updates immediately on Start and Stop.
+- [ ] Panel: start with Return, project picker shows colored dots, tag chips toggle, Stop works, today's list shows all entries and the total updates, ▶ appears on hover and starts a copy, right-click → Delete removes an entry.
 - [ ] "Open Tick" brings the main window to the front. Projects and tags: add (name field is focused), rename, recolor, archive, show archived, unarchive.
 - [ ] Archived project disappears from the panel picker but stays on today's entries.
 
@@ -207,6 +207,8 @@ Goal: an app you install once and forget about.
 | D13 | 2026-09-24 | The synced store is named `Tick.store`. The template's `default.store` is left untouched (safe to delete by hand). | Avoids migrating the template `Item` schema and avoids deleting files. |
 | D14 | 2026-09-24 | `@Model` types, `ColoredLabel`, and pure utilities (`HexColor`, `DurationFormat`) are `nonisolated`. Services and views stay on MainActor. | Under MainActor default isolation, a custom protocol refining `PersistentModel` otherwise becomes a main-actor-isolated conformance, which SwiftData rejects. Models are bound to their context, not to an actor. |
 | D15 | 2026-09-24 | No disabled pomodoro placeholder in M1. The toggle arrives with M2. | Dead UI. |
+| D16 | 2026-09-24 | The menu bar item is an `NSStatusItem` with an `NSPopover`, and the main window an `NSWindow` with `NSHostingController`, all owned by `AppDelegate`. The SwiftUI views are unchanged. D12 is updated: duplicates are resolved in the status item's refresh (every save plus a one-second tick that fetches the running entry). | Adam's test showed the `MenuBarExtra` label never updating from its `@Query`. AppKit gives full control of the title and a non-template colored dot. `openWindow` doesn't work outside SwiftUI scenes, so the main window moved to AppKit as well. The per-second fetch is trivial and also picks up CloudKit imports. |
+| D17 | 2026-09-24 | M1 panel entries: ▶ shows only on hover; right-click → Continue / Delete, without confirmation. | One stray click created entries that couldn't be removed until M4. A context-menu delete is already a deliberate two-step action. |
 
 ## Open questions
 

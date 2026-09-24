@@ -5,9 +5,9 @@ import SwiftUI
 /// The panel shown when clicking the menu bar item.
 struct MenuBarPanel: View {
     let storageError: String?
+    let onOpenMainWindow: () -> Void
 
     @Environment(\.modelContext) private var modelContext
-    @Environment(\.openWindow) private var openWindow
     @Query(filter: #Predicate<TimeEntry> { $0.end == nil }, sort: \TimeEntry.start, order: .reverse)
     private var running: [TimeEntry]
 
@@ -29,14 +29,14 @@ struct MenuBarPanel: View {
             }
 
             Divider()
-            TodayEntriesView { entry in perform { try $0.continueEntry(entry) } }
+            TodayEntriesView(
+                onContinue: { entry in perform { try $0.continueEntry(entry) } },
+                onDelete: { entry in perform { try $0.delete(entry) } }
+            )
             Divider()
 
             HStack {
-                Button("Open Tick") {
-                    openWindow(id: MainWindow.id)
-                    NSApp.activate()
-                }
+                Button("Open Tick", action: onOpenMainWindow)
                 Spacer()
                 Button("Quit") { NSApp.terminate(nil) }
             }

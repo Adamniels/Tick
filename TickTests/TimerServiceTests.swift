@@ -53,6 +53,13 @@ struct TimerServiceTests {
         #expect(entry.end == t0)
     }
 
+    @Test func deletingTheRunningEntryStopsTracking() throws {
+        let entry = try service.start(description: "Oops", project: nil, tags: [], at: t0)
+        try service.delete(entry)
+        #expect(try service.runningEntries().isEmpty)
+        #expect(try context.fetchCount(FetchDescriptor<TimeEntry>()) == 0)
+    }
+
     @Test func continueCopiesDescriptionProjectAndTags() throws {
         let project = Project(name: "Tick")
         let tag = Tick.Tag(name: "deep work")
