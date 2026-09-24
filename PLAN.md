@@ -239,6 +239,11 @@ Goal: see a day like Toggl and fix or add entries directly on a timeline (moved 
 - [ ] Drag a block's top or bottom edge to resize, or the whole block to move. Snaps to 5 minutes, minimum 5 minutes. A running entry: start only, not after now. A block crossing midnight: no dragging on the continuing side.
 - [x] Pure `CalendarLayout` (positions, overlap columns, snapping, drag results with limits), unit tested.
 
+### Data export (added before install, D35)
+- [x] `ExportArchive` format v1: projects, tags, entries (relationships as id references), pomodoro sessions, local settings; ISO 8601 UTC times exact to the millisecond. JSON round trip and CSV (RFC 4180) unit tested.
+- [ ] Settings → Data: **Export all data (JSON)…** and **Export time entries (CSV)…** through the system save panel. Sandbox: user-selected files are now read-write (was read-only).
+- [ ] Manual: export both, open the JSON in a text editor and the CSV in Numbers; the data matches Entries.
+
 ### Manual verification (Adam)
 - [ ] Today looks like the Toggl day view: blocks at the right times, colors, the running entry growing, the now line.
 - [ ] Previous/next/Today and zoom work.
@@ -250,7 +255,8 @@ Goal: see a day like Toggl and fix or add entries directly on a timeline (moved 
 
 ## Milestone 8 — Later
 
-- [ ] Import history from Toggl CSV.
+- [ ] Import history from Toggl CSV (Settings → Data).
+- [ ] Restore from a Tick JSON export (format v1, D35), for moving between databases or Macs.
 
 ---
 
@@ -294,6 +300,7 @@ Goal: see a day like Toggl and fix or add entries directly on a timeline (moved 
 | D32 | 2026-09-24 | The comparison with the previous period is at the same point in time: this week so far versus last week up to the same weekday and time (likewise for today, the month, and a custom range, which compares with the same length right before it). | Comparing a partial period with a complete one would almost always look like a drop. |
 | D33 | 2026-09-24 | Global shortcuts with no presets: start/stop (stops the running timer, or continues the most recent entry when none runs; opens the panel if there is no history), open panel, and open the main window. | Continuing the last entry is the most useful one-key start. Any preset risks colliding with another app's shortcut, so Adam records his own. |
 | D34 | 2026-09-24 | The calendar day view (brief: "later") is built before the install, as M7; Toggl import becomes M8. The calendar is its own main-window section; blocks can also be moved, like Toggl; drags snap to 5 minutes. | Adam wants it before installing. A list and a timeline are different tools, so both get a direct sidebar entry. Moving is the natural companion to resizing. 5-minute snapping keeps drags precise without fiddling. |
+| D35 | 2026-09-24 | Export lives in Settings → Data: all data as versioned JSON (`formatVersion` 1; ids kept, relationships as id references; ISO 8601 UTC exact to the millisecond; includes local settings) and time entries as CSV (Toggl-like columns plus ISO times). User-selected files become read-write in the sandbox. | Export is rare, so it belongs in Settings, not the sidebar (and Tick has no File menu). JSON is the complete, re-importable archive for moving to a new app or database; CSV is for spreadsheets and other trackers. ISO 8601 is portable; sub-millisecond precision isn't worth a Swift-only format. Import comes in M8. |
 
 ## Open questions
 

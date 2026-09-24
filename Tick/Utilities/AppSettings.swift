@@ -2,7 +2,7 @@ import Foundation
 
 /// Local, per-Mac settings (never synced). The struct defaults are the single source of truth
 /// for default values: `registerDefaults()` and the `@AppStorage` properties both use them.
-nonisolated struct PomodoroSettings: Equatable {
+nonisolated struct PomodoroSettings: Equatable, Codable {
     var workMinutes = 25
     var shortBreakMinutes = 5
     var longBreakMinutes = 15
@@ -22,7 +22,7 @@ nonisolated struct PomodoroSettings: Equatable {
     var extensionDuration: TimeInterval { TimeInterval(max(1, extendMinutes) * 60) }
 }
 
-nonisolated struct ReminderSettings: Equatable {
+nonisolated struct ReminderSettings: Equatable, Codable {
     var idleEnabled = true
     var idleMinutes = 15
     /// Input within this many minutes (and an unlocked screen) counts as being at the Mac.
@@ -42,7 +42,7 @@ nonisolated struct ReminderSettings: Equatable {
     }
 }
 
-nonisolated enum OverlayCardSize: String, CaseIterable, Identifiable {
+nonisolated enum OverlayCardSize: String, CaseIterable, Identifiable, Codable {
     case small, medium, large
 
     var id: Self { self }
@@ -56,7 +56,7 @@ nonisolated enum OverlayCardSize: String, CaseIterable, Identifiable {
     }
 }
 
-nonisolated struct OverlayAppearance {
+nonisolated struct OverlayAppearance: Equatable, Codable {
     var dimOpacity = 0.6
     var cardSize = OverlayCardSize.medium
     /// A system sound name, or "" for no sound.
