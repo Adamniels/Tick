@@ -68,7 +68,7 @@ Goal: a menu bar app that starts and stops a timer, synced via CloudKit, with co
 - [ ] Panel: "Open Tick" (main window) and "Quit" buttons.
 
 ### Projects and tags
-- [ ] Minimal main window (`Window` scene) with Projects and Tags sections. M4 extends this window.
+- [ ] Minimal main window (`NSWindow` hosting SwiftUI, D16) with Projects and Tags sections. M4 extends this window.
 - [ ] Create, rename, recolor (`ColorPicker` → hex), archive and unarchive for both projects and tags.
 - [ ] Archived items are hidden from pickers but still shown on existing entries.
 
