@@ -38,6 +38,14 @@ private struct CalendarDayView: View {
     @State private var pendingDelete: TimeEntry?
     /// Where a block (or a new entry, `id == nil`) is being dragged to.
     @State private var preview: Preview?
+    @State private var scrollPosition = ScrollPosition(edge: .top)
+    /// Latest scroll geometry, kept outside SwiftUI state so scrolling doesn't redraw the view.
+    @State private var scroll = ScrollTracker()
+
+    final class ScrollTracker {
+        var offset: CGFloat = 0
+        var viewportHeight: CGFloat = 0
+    }
 
     struct Preview: Equatable {
         let id: UUID?
@@ -47,6 +55,7 @@ private struct CalendarDayView: View {
 
     private static let space = "timeline"
     private static let gutter: CGFloat = 52
+    private static let inset: CGFloat = 10
 
     init(day: Date, hourHeight: CGFloat, onChangeDay: @escaping (Int) -> Void, onToday: @escaping () -> Void,
          onZoom: @escaping (Double) -> Void) {
@@ -75,6 +84,15 @@ private struct CalendarDayView: View {
             }
         }
         .sheet(item: $editing) { $0.editor }
+        // Zoom around the middle of the view: the time there stays there.
+        .onChange(of: hourHeight) { oldHeight, newHeight in
+            let offset = CalendarLayout.zoomedOffset(
+                currentOffset: scroll.offset, viewportHeight: scroll.viewportHeight, inset: Self.inset,
+                oldHourHeight: oldHeight, newHourHeight: newHeight
+            )
+            // After layout, so the taller or shorter content can be scrolled to.
+            DispatchQueue.main.async { scrollPosition.scrollTo(y: offset) }
+        }
         .confirmationDialog(
             "Delete this entry?",
             isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }),
@@ -110,7 +128,9 @@ private struct CalendarDayView: View {
             Text(DurationFormat.clock(total))
                 .font(.title3.monospacedDigit())
             Button("Zoom out", systemImage: "minus.magnifyingglass") { onZoom(-15) }
+                .keyboardShortcut("-", modifiers: .command)
             Button("Zoom in", systemImage: "plus.magnifyingglass") { onZoom(15) }
+                .keyboardShortcut("+", modifiers: .command)
             Button("New entry", systemImage: "plus") { editing = .new }
         }
         .labelStyle(.iconOnly)
@@ -151,7 +171,14 @@ private struct CalendarDayView: View {
                     }
                     .frame(height: 24 * hourHeight)
                 }
-                .padding(.vertical, 10)
+                .padding(.vertical, Self.inset)
+            }
+            .scrollPosition($scrollPosition)
+            .onScrollGeometryChange(for: CGSize.self) { geometry in
+                CGSize(width: geometry.contentOffset.y, height: geometry.containerSize.height)
+            } action: { _, value in
+                scroll.offset = value.width
+                scroll.viewportHeight = value.height
             }
             .onAppear {
                 let hour = initialHour(entries: entries, now: now)

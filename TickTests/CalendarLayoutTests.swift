@@ -116,3 +116,24 @@ struct CalendarBlockHeightTests {
         #expect(firstBottom == secondTop)
     }
 }
+
+struct CalendarZoomTests {
+    @Test func keepsTheMiddleTimeInTheMiddle() {
+        // Viewport 400 pt, inset 10, at 60 pt/h scrolled to 530: the middle is 12:00 (10 + 12 × 60 − 200).
+        let offset = CalendarLayout.zoomedOffset(
+            currentOffset: 530, viewportHeight: 400, inset: 10, oldHourHeight: 60, newHourHeight: 120
+        )
+        let middleHoursAfter = (offset + 200 - 10) / 120
+        let noon: CGFloat = 12
+        #expect(middleHoursAfter == noon)
+    }
+
+    @Test func staysWithinTheScrollableRange() {
+        #expect(CalendarLayout.zoomedOffset(currentOffset: 0, viewportHeight: 400, inset: 10, oldHourHeight: 120, newHourHeight: 60) == 0)
+        let bottom = CalendarLayout.zoomedOffset(
+            currentOffset: 2500, viewportHeight: 400, inset: 10, oldHourHeight: 120, newHourHeight: 60
+        )
+        let maxOffset: CGFloat = 2 * 10 + 24 * 60 - 400
+        #expect(bottom == maxOffset)
+    }
+}

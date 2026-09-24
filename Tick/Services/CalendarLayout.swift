@@ -88,6 +88,17 @@ nonisolated enum CalendarLayout {
         return max(exact, CGFloat(minimumDuration / 3600) * hourHeight)
     }
 
+    /// The scroll offset after zooming that keeps the time at the middle of the viewport in the middle.
+    /// `inset` is the padding above hour 0; the result stays within the scrollable range.
+    static func zoomedOffset(
+        currentOffset: CGFloat, viewportHeight: CGFloat, inset: CGFloat, oldHourHeight: CGFloat, newHourHeight: CGFloat
+    ) -> CGFloat {
+        let centerHours = (currentOffset + viewportHeight / 2 - inset) / oldHourHeight
+        let offset = inset + centerHours * newHourHeight - viewportHeight / 2
+        let maxOffset = max(0, 2 * inset + 24 * newHourHeight - viewportHeight)
+        return min(max(0, offset), maxOffset)
+    }
+
     static func duration(ofDistance distance: CGFloat, hourHeight: CGFloat) -> TimeInterval {
         TimeInterval(distance / hourHeight * 3600)
     }
