@@ -20,7 +20,7 @@ Status legend: ⬜ not started · 🟨 in progress · ✅ done
 
 | # | Milestone | Status |
 |---|-----------|--------|
-| 0 | Housekeeping | ⬜ |
+| 0 | Housekeeping | ✅ |
 | 1 | Foundation: models, sync, menu bar timer, projects and tags | ⬜ |
 | 2 | The popup and pomodoro | ⬜ |
 | 3 | Reminders | ⬜ |
@@ -35,10 +35,11 @@ Status legend: ⬜ not started · 🟨 in progress · ✅ done
 
 Goal: a clean project base before any feature code.
 
-- [ ] Add a standard Xcode `.gitignore` and untrack `Tick.xcodeproj/xcuserdata/`.
-- [ ] Switch to Swift 6 language mode (keep MainActor default isolation). Fix any template warnings.
-- [ ] Add a unit test target `TickTests` using Swift Testing, with one trivial test so the `test` command runs.
-- [ ] Create the folder structure from the brief (`App/`, `Models/`, `Services/`, `Views/...`, `Utilities/`).
+- [x] Add a standard Xcode `.gitignore` and untrack `Tick.xcodeproj/xcuserdata/`. Commit a shared `Tick` scheme instead (`xcshareddata/`), so the test action is explicit.
+- [x] Switch to Swift 6 language mode (keep MainActor default isolation). Fix any template warnings.
+- [x] Add a unit test target `TickTests` using Swift Testing, with one trivial test so the `test` command runs. The target is hosted by the app and uses MainActor default isolation like the app.
+- [x] Create the folder structure from the brief. Existing files were moved into `App/`, `Models/`, and `Views/`. Git doesn't track empty folders, so `Services/`, `Utilities/`, and the `Views/` subfolders are created when their first file lands.
+- [x] Fix the template crashing on launch (it also broke the test host): CloudKit is temporarily disabled on the template container, see M1.
 
 **Done when:** the app builds, `xcodebuild test` passes, and `git status` is clean after a build.
 
@@ -50,7 +51,8 @@ Goal: a menu bar app that starts and stops a timer, synced via CloudKit, with co
 
 ### Model and storage
 - [ ] ☁️ Replace `Item` with `Project`, `Tag`, `TimeEntry`, and `PomodoroSession` exactly as in the brief. Delete `Item.swift` and `ContentView.swift`.
-- [ ] `ModelContainer` with `cloudKitDatabase: .private("iCloud.com.adamniels.Tick")`. Handle container creation errors with a visible message rather than a crash where feasible.
+- [ ] `ModelContainer` with `cloudKitDatabase: .private("iCloud.com.adamniels.Tick")`, replacing the temporary `cloudKitDatabase: .none` from M0. Handle container creation errors with a visible message rather than a crash where feasible.
+- [ ] When the app runs as the unit test host, use an in-memory store without CloudKit, so tests never touch real data or iCloud.
 - [ ] `Utilities/Color+Hex.swift`: `Color` ↔ hex string, with unit tests (round trip, invalid input falls back to the default grey).
 
 ### Timer logic

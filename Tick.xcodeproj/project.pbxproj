@@ -6,8 +6,19 @@
 	objectVersion = 110;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		ED3D079730656BA300E37887 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = ED3D076D30656BA000E37887 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = ED3D077430656BA000E37887;
+			remoteInfo = Tick;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		ED3D077530656BA000E37887 /* Tick.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tick.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		ED3D079030656BA300E37887 /* TickTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TickTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -16,10 +27,20 @@
 			path = Tick;
 			sourceTree = "<group>";
 		};
+		ED3D079130656BA300E37887 /* TickTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = TickTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		ED3D077230656BA000E37887 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		ED3D079230656BA300E37887 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
 			);
@@ -31,6 +52,7 @@
 			isa = PBXGroup;
 			children = (
 				ED3D077730656BA000E37887 /* Tick */,
+				ED3D079130656BA300E37887 /* TickTests */,
 				ED3D077630656BA000E37887 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -39,6 +61,7 @@
 			isa = PBXGroup;
 			children = (
 				ED3D077530656BA000E37887 /* Tick.app */,
+				ED3D079030656BA300E37887 /* TickTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -64,6 +87,27 @@
 			productReference = ED3D077530656BA000E37887 /* Tick.app */;
 			productType = "com.apple.product-type.application";
 		};
+		ED3D079530656BA300E37887 /* TickTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = ED3D079830656BA300E37887 /* Build configuration list for PBXNativeTarget "TickTests" */;
+			buildPhases = (
+				ED3D079430656BA300E37887 /* Sources */,
+				ED3D079230656BA300E37887 /* Frameworks */,
+				ED3D079330656BA300E37887 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				ED3D079630656BA300E37887 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				ED3D079130656BA300E37887 /* TickTests */,
+			);
+			name = TickTests;
+			productName = TickTests;
+			productReference = ED3D079030656BA300E37887 /* TickTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -76,6 +120,10 @@
 				TargetAttributes = {
 					ED3D077430656BA000E37887 = {
 						CreatedOnToolsVersion = 27.0;
+					};
+					ED3D079530656BA300E37887 = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = ED3D077430656BA000E37887;
 					};
 				};
 			};
@@ -94,12 +142,18 @@
 			projectRoot = "";
 			targets = (
 				ED3D077430656BA000E37887 /* Tick */,
+				ED3D079530656BA300E37887 /* TickTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		ED3D077330656BA000E37887 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		ED3D079330656BA300E37887 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
 			);
@@ -112,7 +166,20 @@
 			files = (
 			);
 		};
+		ED3D079430656BA300E37887 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		ED3D079630656BA300E37887 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = ED3D077430656BA000E37887 /* Tick */;
+			targetProxy = ED3D079730656BA300E37887 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		ED3D078030656BA200E37887 /* Debug configuration for PBXProject "Tick" */ = {
@@ -272,7 +339,7 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 			};
 			name = Debug;
 		};
@@ -315,7 +382,49 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		ED3D079930656BA300E37887 /* Debug configuration for PBXNativeTarget "TickTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Y73QD7X28D;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.adamniels.TickTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tick.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Tick";
+			};
+			name = Debug;
+		};
+		ED3D079A30656BA300E37887 /* Release configuration for PBXNativeTarget "TickTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Y73QD7X28D;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.adamniels.TickTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tick.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Tick";
 			};
 			name = Release;
 		};
@@ -335,6 +444,14 @@
 			buildConfigurations = (
 				ED3D078330656BA200E37887 /* Debug configuration for PBXNativeTarget "Tick" */,
 				ED3D078430656BA200E37887 /* Release configuration for PBXNativeTarget "Tick" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		ED3D079830656BA300E37887 /* Build configuration list for PBXNativeTarget "TickTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				ED3D079930656BA300E37887 /* Debug configuration for PBXNativeTarget "TickTests" */,
+				ED3D079A30656BA300E37887 /* Release configuration for PBXNativeTarget "TickTests" */,
 			);
 			defaultConfigurationName = Release;
 		};
