@@ -93,31 +93,31 @@ Deferred to M6 (decision D18): only one Mac is available right now.
 Goal: the unmissable popup exists, and pomodoro uses it.
 
 ### OverlayController
-- [ ] One `NSPanel` per `NSScreen`: `level = .screenSaver`, `collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]`, borderless, full-screen dimmed background, card centered on each screen.
-- [ ] Panels can become key (subclass override) so buttons work immediately; `NSApp.activate` on show.
-- [ ] Esc, clicking outside, and Cmd+W do nothing. The popup closes only via a button.
-- [ ] Rebuild the panels when the screen configuration changes while shown.
+- [x] One `NSPanel` per `NSScreen`: `level = .screenSaver`, `collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]`, borderless, full-screen dimmed background, card centered on each screen.
+- [x] Panels can become key (subclass override) so buttons work immediately; `NSApp.activate` on show.
+- [x] Esc, clicking outside, and Cmd+W do nothing. The popup closes only via a button.
+- [ ] Rebuild the panels when the screen configuration changes while shown. (Implemented, not yet exercised: plug or unplug a monitor while a popup shows.)
 - [x] A content model (title, message, list of actions) so M2 and M3 reuse one overlay view (`Views/Overlay/`). Requests have ids so they can be dismissed from elsewhere and aren't queued twice.
-- [ ] Play the configured sound on show.
-- [ ] Only one overlay at a time. If a second one is requested while one is shown, queue it.
-- [ ] No Return shortcut, and buttons are disabled for the first 0.6 s so a stray click or keypress can't answer the popup (D19).
-- [ ] Manual test checklist: full screen app, other Space, second monitor, while in a video call, while a sheet is open in another app.
+- [x] Play the configured sound on show.
+- [ ] Only one overlay at a time. If a second one is requested while one is shown, queue it. (Implemented, first exercised in M3 when reminders can coincide with pomodoro.)
+- [x] No Return shortcut, and buttons are disabled for the first 0.6 s so a stray click or keypress can't answer the popup (D19).
+- [x] Manual test checklist: full screen app, other Space, second monitor, while in a video call, while a sheet is open in another app.
 
 ### Settings (first version)
-- [ ] Settings section in the main window (D20) with local `@AppStorage` values: pomodoro durations, dim opacity, card size, sound (from system sounds), and a **Test popup** button.
+- [x] Settings section in the main window (D20) with local `@AppStorage` values: pomodoro durations, dim opacity, card size, sound (from system sounds), and a **Test popup** button.
 
 ### Pomodoro
 - [x] Phase state machine as a pure type: work → short break, with a long break after every 4th work block; durations from settings (default 25/5/15). Unit tests for the sequence, the long break count, and extensions.
 - [x] ☁️ `PomodoroService`: creates `PomodoroSession` records; checks the synced `plannedEnd` every second from the `AppDelegate` refresh loop (D23), never a stored countdown. `PomodoroSession` gains `runID` and `endedAt` (D21). Transition rules are in D22. Unit tested end to end with a spy overlay.
-- [ ] Pomodoro toggle in the panel, remembered between timers (decision D8a).
-- [ ] After a work block, popup: **Start break** / **5 more minutes** / **End pomodoro**.
-- [ ] After a break, popup: **Start next block** / **Extend break 5 min** / **End**.
-- [ ] Breaks stop the time entry, and the next work block continues it as a new entry with `isPomodoro = true` (decision D8b). Setting to keep the entry running instead.
-- [ ] Menu bar shows the phase and remaining time, for example `🍅 18:42`, or a break symbol during breaks.
-- [ ] If `plannedEnd` passed while the Mac was asleep, show the popup on wake. (Covered by the per-second check; verify manually.)
-- [ ] Running entry: the description is editable in the panel (Adam's request). Return no longer stops the timer. Editing past entries stays in M4.
-- [ ] Fix: an open panel re-anchors when the menu bar item changes width (it drifted left when a pomodoro ended).
-- [ ] Multi-Mac (decision D4): each Mac shows its own popup, and closes it when synced data shows the phase has been handled elsewhere. Unit tested; the real two-Mac check joins the M6 sync test.
+- [x] Pomodoro toggle in the panel, remembered between timers (decision D8a).
+- [x] After a work block, popup: **Start break** / **5 more minutes** / **End pomodoro**.
+- [x] After a break, popup: **Start next block** / **Extend break 5 min** / **End**.
+- [x] Breaks stop the time entry, and the next work block continues it as a new entry with `isPomodoro = true` (decision D8b). Setting to keep the entry running instead.
+- [x] Menu bar shows the phase and remaining time, for example `🍅 18:42`, or a break symbol during breaks.
+- [x] If `plannedEnd` passed while the Mac was asleep, show the popup on wake. (Covered by the per-second check; verify manually.)
+- [x] Running entry: the description is editable in the panel (Adam's request). Return no longer stops the timer. Editing past entries stays in M4.
+- [ ] Fix: the panel is anchored to the menu bar item's right edge, which never moves because status items grow leftwards. It no longer drifts when a pomodoro ends or jumps while the description is edited.
+- [x] Multi-Mac (decision D4): each Mac shows its own popup, and closes it when synced data shows the phase has been handled elsewhere. Unit tested; the real two-Mac check is part of the deferred M6 sync test (D18).
 
 **Done when:** a full 4-block pomodoro cycle works end to end, the popup is impossible to miss on every screen and Space, and the tests pass.
 
@@ -176,7 +176,7 @@ Goal: an app you install once and forget about.
 - [ ] Launch at login toggle via `SMAppService.mainApp`.
 - [ ] Settings reorganized into tabs: General, Pomodoro, Reminders, Popup, Shortcuts.
 - [ ] App icon and a template menu bar icon.
-- [ ] Two-Mac sync test (deferred from M1, D18): debug builds on both Macs with the same iCloud account. Create a project on one, see it on the other. Start a timer on both at almost the same time and confirm that after sync only the newest keeps running.
+- [ ] Two-Mac sync test (deferred from M1, D18): debug builds on both Macs with the same iCloud account. Create a project on one, see it on the other. Start a timer on both at almost the same time and confirm that after sync only the newest keeps running. Run a 1-minute pomodoro with both awake: both show the popup, and answering on one closes it on the other (D4).
 - [ ] Install checklist: deploy the CloudKit schema to production, archive, export, move to `/Applications`, enable login item, and verify sync between both Macs on the production environment.
 
 **Done when:** both Macs run the archived build from `/Applications`, start at login, and sync.

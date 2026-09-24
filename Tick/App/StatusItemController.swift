@@ -59,8 +59,15 @@ final class StatusItemController: NSObject {
         repositionPopoverIfNeeded()
     }
 
-    /// The item's width follows its title (for example when a pomodoro ends), and an open
-    /// popover doesn't follow by itself. Runs after layout so the new width is known.
+    /// The item's width follows its title. Status items grow leftwards, so its right edge never
+    /// moves on screen: anchoring the popover there keeps it still while the title changes.
+    private static func anchorRect(in button: NSStatusBarButton) -> NSRect {
+        let width: CGFloat = 16
+        return NSRect(x: button.bounds.maxX - width, y: 0, width: width, height: button.bounds.height)
+    }
+
+    /// The anchor is in button coordinates, so it must be recomputed when the width changes.
+    /// Runs after layout so the new width is known.
     private func repositionPopoverIfNeeded() {
         DispatchQueue.main.async { [weak self] in
             guard let self, let button = statusItem.button else { return }
@@ -68,7 +75,7 @@ final class StatusItemController: NSObject {
             guard width != lastButtonWidth else { return }
             lastButtonWidth = width
             if popover.isShown {
-                popover.positioningRect = button.bounds
+                popover.positioningRect = Self.anchorRect(in: button)
             }
         }
     }
@@ -78,7 +85,7 @@ final class StatusItemController: NSObject {
             popover.performClose(nil)
         } else if let button = statusItem.button {
             NSApp.activate()
-            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            popover.show(relativeTo: Self.anchorRect(in: button), of: button, preferredEdge: .minY)
             popover.contentViewController?.view.window?.makeKey()
         }
     }
