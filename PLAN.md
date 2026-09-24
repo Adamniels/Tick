@@ -25,7 +25,7 @@ Status legend: ⬜ not started · 🟨 in progress · ✅ done
 | 2 | The popup and pomodoro | ✅ |
 | 3 | Reminders | ✅ |
 | 4 | Main window: entries | ✅ |
-| 5 | Statistics | ⬜ |
+| 5 | Statistics | 🟨 |
 | 6 | Polish and install | ⬜ |
 | 7 | Later: calendar view, Toggl import | ⬜ |
 
@@ -177,11 +177,17 @@ Goal: full control of history.
 
 Goal: see where the time goes.
 
-- [ ] Period picker: today, this week, this month, custom range. The previous period is the one of equal length immediately before.
-- [ ] Aggregation as pure functions with unit tests: clip entries to the period, count the running entry up to now, split entries across midnight for per-day data, and a "No project" bucket.
-- [ ] Header: total time in the period and the change against the previous period.
-- [ ] Charts (Swift Charts, project colors, archived projects included): time per project, time per tag, time per day stacked by project, and completed pomodoros per day.
-- [ ] Resolve open question Q1 (tag time counting) before building the tag chart.
+- [x] Period picker: today, this week, this month, custom range. The previous period is compared at the same point in time (D32). Pure `StatsPeriod`, unit tested (Monday-first weeks, month lengths, reversed custom dates).
+- [x] Aggregation as pure functions with unit tests (`Statistics.compute`): clip entries to the period, count the running entry up to now, split entries across midnight for per-day data, a "No project" bucket, archived projects included, overlap as summed minus covered time (D31).
+- [ ] Header: total time in the period, change against the previous period, and the overlap notice.
+- [ ] Charts (Swift Charts, project colors, archived projects included): time per project, time per tag (D30, with footnote), time per day stacked by project, and completed pomodoros per day.
+- [x] Resolve open question Q1 (tag time counting) before building the tag chart. (D30; Q2 resolved as D31.)
+
+### Manual verification (Adam)
+- [ ] Statistics (main window) shows this week: total, comparison line, and the four charts in project colors.
+- [ ] Switch Today, This week, This month and Custom; the numbers change sensibly.
+- [ ] A period with an overlapping manual entry shows the orange overlap notice.
+- [ ] Spot-check: one day's total in Statistics (Today) matches the day total in Entries.
 
 **Done when:** the numbers match a manual calculation for a sample week, and the tests pass.
 
@@ -244,11 +250,13 @@ Goal: an app you install once and forget about.
 | D27 | 2026-09-24 | Popups can carry an optional time field (`OverlayDateInput`), and more than three buttons stack vertically. | "Stop at selected time" needs a time input. The idle popup has up to five choices, which don't fit side by side. |
 | D28 | 2026-09-24 | The entry editor works on a draft copy (`EntryDraft`) and saves only on Save. | Live binding would save, and sync, every keystroke, and Cancel couldn't undo. A draft also makes validation a pure, testable function. |
 | D29 | 2026-09-24 | A running entry's end can't be edited in the editor; stopping goes through the panel. | Stopping has pomodoro rules (D22). Keeping one way to stop avoids a second path that bypasses them. |
+| D30 | 2026-09-24 | (Q1) An entry with several tags counts its full time toward each tag; the tag chart says tag totals can exceed the period total. Untagged time gets a "No tag" bar. | Splitting time between tags would give numbers no one can trace back to entries. |
+| D31 | 2026-09-24 | (Q2) Statistics sum entry durations everywhere, so per-project numbers add up to the total. When the period contains overlaps, a notice shows the overlapping time (sum minus covered time) and how many entries, pointing to Entries where they're marked. | Overlaps only come from manual entries or edits and are almost always mistakes; the stats should point at them, not silently compensate. Rejected: union of intervals (per-project stops adding up) and proportional splitting (hard to explain). |
+| D32 | 2026-09-24 | The comparison with the previous period is at the same point in time: this week so far versus last week up to the same weekday and time (likewise for today, the month, and a custom range, which compares with the same length right before it). | Comparing a partial period with a complete one would almost always look like a drop. |
 
 ## Open questions
 
-- **Q1 (M5):** An entry with several tags: does its full time count toward each tag? Proposal: yes, with a note that tag totals can exceed the period total. Splitting the time between tags would give misleading numbers.
-- **Q2 (M5):** How do overlapping entries count in statistics? Today day totals sum durations, so overlapping time counts twice (only manual entries or edits can overlap; the timer can't). Proposal: keep summing everywhere, so per-project numbers add up to the total and trace back to entries, and show a notice when a period contains overlaps ("includes 3 min of overlapping time from 2 entries") pointing to the marked entries. Rejected: union of intervals (per-project stops adding up) and proportional splitting (hard to explain). Possible later (M7): a "trim overlap" action in the editor.
+_None right now. Q1 and Q2 were resolved as D30 and D31._
 
 ## CloudKit schema change log
 

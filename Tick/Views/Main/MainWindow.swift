@@ -1,11 +1,11 @@
 import SwiftUI
 
-/// The main window: entries, projects and tags, settings. M5 adds statistics.
+/// The main window: entries, statistics, projects and tags, settings.
 struct MainWindow: View {
     let onTestPopup: () -> Void
 
     enum Section: Hashable {
-        case entries, projects, tags, settings
+        case entries, statistics, projects, tags, settings
     }
 
     @State private var selection: Section? = .entries
@@ -14,6 +14,7 @@ struct MainWindow: View {
         NavigationSplitView {
             List(selection: $selection) {
                 Label("Entries", systemImage: "list.bullet.rectangle").tag(Section.entries)
+                Label("Statistics", systemImage: "chart.bar").tag(Section.statistics)
                 Label("Projects", systemImage: "folder").tag(Section.projects)
                 Label("Tags", systemImage: "tag").tag(Section.tags)
                 Label("Settings", systemImage: "gearshape").tag(Section.settings)
@@ -22,6 +23,7 @@ struct MainWindow: View {
         } detail: {
             switch selection {
             case .entries: EntriesView()
+            case .statistics: StatsView()
             case .projects: LabelListView<Project>(title: "Projects", noun: "project")
             case .tags: LabelListView<Tag>(title: "Tags", noun: "tag")
             case .settings: SettingsView(onTestPopup: onTestPopup)
