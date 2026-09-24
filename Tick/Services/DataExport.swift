@@ -112,7 +112,7 @@ enum DataExport {
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         encoder.dateEncodingStrategy = .custom { date, encoder in
             var container = encoder.singleValueContainer()
-            try container.encode(date.formatted(.iso8601.year().month().day().time(includingFractionalSeconds: true)))
+            try container.encode(isoMilliseconds(date))
         }
         return try encoder.encode(archive)
     }
@@ -120,10 +120,33 @@ enum DataExport {
     nonisolated static func decode(_ data: Data) throws -> ExportArchive {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .custom { decoder in
-            let text = try decoder.singleValueContainer().decode(String.self)
-            return try Date(text, strategy: .iso8601.year().month().day().time(includingFractionalSeconds: true))
+            let container = try decoder.singleValueContainer()
+            let text = try container.decode(String.self)
+            guard let date = parseISOMilliseconds(text) else {
+                throw DecodingError.dataCorruptedError(in: container, debugDescription: "Not an ISO 8601 date: \(text)")
+            }
+            return date
         }
         return try decoder.decode(ExportArchive.self, from: data)
+    }
+
+    /// "2026-09-21T07:00:00.123Z". Rounded to whole milliseconds as an integer, so reading it back
+    /// and writing it again gives the identical string (formatters truncate float noise instead).
+    nonisolated static func isoMilliseconds(_ date: Date) -> String {
+        let totalMilliseconds = Int64((date.timeIntervalSince1970 * 1000).rounded())
+        let seconds = totalMilliseconds.quotientAndRemainder(dividingBy: 1000)
+        let (wholeSeconds, milliseconds) = seconds.remainder < 0
+            ? (seconds.quotient - 1, seconds.remainder + 1000) : (seconds.quotient, seconds.remainder)
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        let base = formatter.string(from: Date(timeIntervalSince1970: TimeInterval(wholeSeconds)))
+        return base.dropLast() + String(format: ".%03dZ", milliseconds)
+    }
+
+    nonisolated static func parseISOMilliseconds(_ text: String) -> Date? {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter.date(from: text)
     }
 
     /// Time entries as CSV, with Toggl-like columns plus exact ISO 8601 times. Local dates and

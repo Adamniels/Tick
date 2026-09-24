@@ -67,6 +67,17 @@ struct DataExportTests {
         #expect(lines[2].hasPrefix("Running,,,2026-09-21,10:40:00,,,,,no,"))
     }
 
+    @Test func isoTimesAreStableToTheMillisecond() throws {
+        // Values that floating point can't represent exactly must still come back identical.
+        for fraction in [0.001, 0.123, 0.5, 0.9995, 0.999] {
+            let date = Date(timeIntervalSince1970: 1_790_000_000 + fraction)
+            let text = DataExport.isoMilliseconds(date)
+            let parsed = try #require(DataExport.parseISOMilliseconds(text))
+            #expect(DataExport.isoMilliseconds(parsed) == text)
+        }
+        #expect(DataExport.isoMilliseconds(Date(timeIntervalSince1970: 1_790_000_000.123)) == "2026-09-21T14:13:20.123Z")
+    }
+
     @Test(arguments: [
         ("plain", "plain"),
         ("a, b", "\"a, b\""),

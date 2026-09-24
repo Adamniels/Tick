@@ -27,7 +27,7 @@ Status legend: ⬜ not started · 🟨 in progress · ✅ done
 | 4 | Main window: entries | ✅ |
 | 5 | Statistics | ✅ |
 | 6 | Polish and install | 🟨 |
-| 7 | Calendar day view | 🟨 |
+| 7 | Calendar day view (+ data export) | ✅ |
 | 8 | Later: Toggl import | ⬜ |
 
 ---
@@ -211,7 +211,7 @@ Goal: an app you install once and forget about.
 3. **Archive.** Xcode → Product → Archive. In the Organizer: Distribute App → **Direct Distribution**. Xcode signs with Developer ID and notarizes; this build uses the **production** CloudKit environment. Export `Tick.app`.
 4. **Install.** Quit the debug Tick (Quit in the panel), move the exported `Tick.app` to Applications, open it.
 5. **Login item.** Settings → General → "Open Tick at login". Approve in System Settings if asked.
-6. **Note: production starts empty.** Everything tracked with debug builds lives in the development environment and stays there, including today's test entries. Debug builds from Xcode keep using development, so the two never mix.
+6. **Production starts empty.** The exported build uses its own local store, `Tick-Production.store` (D36), so nothing tracked with debug builds, including the test entries, is uploaded to production. Debug builds keep using `Tick.store` and the development environment; the two never mix.
 7. **Second Mac.** Copy the same exported `Tick.app` to its Applications, same Apple ID, open it, then run the two-Mac sync test:
    - Create a project on one Mac; it appears on the other within about a minute.
    - Start a timer on both at almost the same time; after sync only the newest keeps running (D6).
@@ -231,25 +231,25 @@ Goal: an app you install once and forget about.
 
 Goal: see a day like Toggl and fix or add entries directly on a timeline (moved ahead of the install, D34).
 
-- [ ] Calendar section in the main window: header with previous/next day (also ⌘← ⌘→), date with a Today badge or button, day total, zoom, and new entry.
-- [ ] Scrollable 24-hour grid, opening at the current time (or the first entry on other days), with a current-time line.
-- [ ] Entries as blocks in project colors (description, project, duration); the running entry dashed and growing live; overlapping entries side by side in columns.
-- [ ] Click a block to edit (the M4 editor); right-click for Edit, Continue, Delete.
-- [ ] Drag on empty space to create (editor opens prefilled; Cancel creates nothing); click on empty space for a 30-minute entry.
-- [ ] Drag a block's top or bottom edge to resize, or the whole block to move. Snaps to 5 minutes, minimum 5 minutes. A running entry: start only, not after now. A block crossing midnight: no dragging on the continuing side.
+- [x] Calendar section in the main window: header with previous/next day (also ⌘← ⌘→), date with a Today badge or button, day total, zoom, and new entry.
+- [x] Scrollable 24-hour grid, opening at the current time (or the first entry on other days), with a current-time line.
+- [x] Entries as blocks in project colors (description, project, duration); the running entry dashed and growing live; overlapping entries side by side in columns.
+- [x] Click a block to edit (the M4 editor); right-click for Edit, Continue, Delete.
+- [x] Drag on empty space to create (editor opens prefilled; Cancel creates nothing); click on empty space for a 30-minute entry.
+- [x] Drag a block's top or bottom edge to resize, or the whole block to move. Snaps to 5 minutes, minimum 5 minutes. A running entry: start only, not after now. A block crossing midnight: no dragging on the continuing side.
 - [x] Pure `CalendarLayout` (positions, overlap columns, snapping, drag results with limits), unit tested.
 
 ### Data export (added before install, D35)
 - [x] `ExportArchive` format v1: projects, tags, entries (relationships as id references), pomodoro sessions, local settings; ISO 8601 UTC times exact to the millisecond. JSON round trip and CSV (RFC 4180) unit tested.
-- [ ] Settings → Data: **Export all data (JSON)…** and **Export time entries (CSV)…** through the system save panel. Sandbox: user-selected files are now read-write (was read-only).
-- [ ] Manual: export both, open the JSON in a text editor and the CSV in Numbers; the data matches Entries.
+- [x] Settings → Data: **Export all data (JSON)…** and **Export time entries (CSV)…** through the system save panel. Sandbox: user-selected files are now read-write (was read-only).
+- [x] Manual: export both, open the JSON in a text editor and the CSV in Numbers; the data matches Entries.
 
 ### Manual verification (Adam)
-- [ ] Today looks like the Toggl day view: blocks at the right times, colors, the running entry growing, the now line.
-- [ ] Previous/next/Today and zoom work.
-- [ ] Create by dragging and by clicking; Cancel creates nothing.
-- [ ] Resize both edges and move a block; the change sticks and shows in Entries.
-- [ ] Overlapping entries appear side by side.
+- [x] Today looks like the Toggl day view: blocks at the right times, colors, the running entry growing, the now line.
+- [x] Previous/next/Today and zoom work.
+- [x] Create by dragging and by clicking; Cancel creates nothing.
+- [x] Resize both edges and move a block; the change sticks and shows in Entries.
+- [x] Overlapping entries appear side by side.
 
 ---
 
@@ -301,6 +301,7 @@ Goal: see a day like Toggl and fix or add entries directly on a timeline (moved 
 | D33 | 2026-09-24 | Global shortcuts with no presets: start/stop (stops the running timer, or continues the most recent entry when none runs; opens the panel if there is no history), open panel, and open the main window. | Continuing the last entry is the most useful one-key start. Any preset risks colliding with another app's shortcut, so Adam records his own. |
 | D34 | 2026-09-24 | The calendar day view (brief: "later") is built before the install, as M7; Toggl import becomes M8. The calendar is its own main-window section; blocks can also be moved, like Toggl; drags snap to 5 minutes. | Adam wants it before installing. A list and a timeline are different tools, so both get a direct sidebar entry. Moving is the natural companion to resizing. 5-minute snapping keeps drags precise without fiddling. |
 | D35 | 2026-09-24 | Export lives in Settings → Data: all data as versioned JSON (`formatVersion` 1; ids kept, relationships as id references; ISO 8601 UTC exact to the millisecond; includes local settings) and time entries as CSV (Toggl-like columns plus ISO times). User-selected files become read-write in the sandbox. | Export is rare, so it belongs in Settings, not the sidebar (and Tick has no File menu). JSON is the complete, re-importable archive for moving to a new app or database; CSV is for spreadsheets and other trackers. ISO 8601 is portable; sub-millisecond precision isn't worth a Swift-only format. Import comes in M8. |
+| D36 | 2026-09-24 | One local store per CloudKit environment: the app reads its own `icloud-container-environment` entitlement at launch; Production uses `Tick-Production.store`, anything else keeps `Tick.store`. Export times are integer milliseconds. | Debug and release builds share the sandbox container (same bundle id). Opening the development store with production mirroring would have uploaded all test data to production. The entitlement, not the build configuration, is what decides the CloudKit environment. Integer milliseconds make export → import → export stable (formatters truncate float noise). |
 
 ## Open questions
 

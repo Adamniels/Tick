@@ -14,6 +14,13 @@ struct TimerServiceTests {
         #expect(Persistence.isRunningTests)
     }
 
+    @Test func eachCloudKitEnvironmentHasItsOwnStore() {
+        #expect(Persistence.storeName(forEnvironment: "Production") == "Tick-Production")
+        #expect(Persistence.storeName(forEnvironment: "Development") == "Tick")
+        // Xcode's development-signed test host carries no environment entitlement.
+        #expect(Persistence.cloudKitEnvironment == "Development")
+    }
+
     @Test func startCreatesRunningEntryWithProjectAndTags() throws {
         let project = Project(name: "Tick")
         let tag = Tick.Tag(name: "deep work")
