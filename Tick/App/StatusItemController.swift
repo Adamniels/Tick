@@ -9,6 +9,8 @@ final class StatusItemController: NSObject {
     private var hostingView: NSHostingView<AnyView>?
     private var resignObserver: NSObjectProtocol?
     private var lastClosed = Date.distantPast
+    /// Where the open panel's top-left corner is pinned, in screen coordinates.
+    private var topLeft: NSPoint?
 
     init(
         modelContainer: ModelContainer,
@@ -83,17 +85,14 @@ final class StatusItemController: NSObject {
         }
     }
 
-    /// Placed once, like a menu: below the item, left edges aligned, kept on screen.
+    /// Placed once, like a menu, on the screen whose menu bar was clicked (D24).
     /// While open, only the height changes and the top-left corner stays pinned.
     private func open() {
         guard let button = statusItem.button, let buttonWindow = button.window,
               let screen = buttonWindow.screen, let hostingView else { return }
         let itemFrame = buttonWindow.convertToScreen(button.convert(button.bounds, to: nil))
         let size = hostingView.fittingSize
-        let visible = screen.visibleFrame
-        let margin: CGFloat = 8
-        let x = max(visible.minX + margin, min(itemFrame.minX, visible.maxX - size.width - margin))
-        panel.pinnedTopLeft = NSPoint(x: x, y: itemFrame.minY - 4)
+        topLeft = DropdownLayout.topLeft(below: itemFrame, width: size.width, in: screen.visibleFrame)
         resize(to: size)
 
         NSApp.activate()
@@ -108,17 +107,17 @@ final class StatusItemController: NSObject {
         statusItem.button?.highlight(false)
     }
 
+    /// Sets the whole frame explicitly, so the pinned corner never depends on how AppKit resizes.
     private func resize(to size: CGSize) {
-        guard size.width > 0, size.height > 0 else { return }
-        panel.setContentSize(size)
+        guard let topLeft, size.width > 0, size.height > 0 else { return }
+        panel.setFrame(DropdownLayout.frame(topLeft: topLeft, size: size), display: true)
         panel.invalidateShadow()
     }
 }
 
-/// The dropdown under the menu bar item: borderless, menu-like, top-left corner pinned.
+/// The dropdown under the menu bar item: borderless and menu-like. Positioned by `StatusItemController`.
 final class MenuBarWindow: NSPanel {
-    /// Screen point for the top-left corner. Every frame change keeps it fixed.
-    var pinnedTopLeft: NSPoint?
+    var onEscape: (() -> Void)?
 
     init() {
         super.init(contentRect: .zero, styleMask: [.borderless], backing: .buffered, defer: true)
@@ -134,24 +133,29 @@ final class MenuBarWindow: NSPanel {
 
     override var canBecomeKey: Bool { true }
 
-    var onEscape: (() -> Void)?
-
     /// Esc closes it, like a menu.
     override func cancelOperation(_ sender: Any?) {
         onEscape?()
     }
+}
 
-    override func setFrame(_ frameRect: NSRect, display flag: Bool) {
-        super.setFrame(pinned(frameRect), display: flag)
+/// Placement of the dropdown, as pure geometry in screen coordinates (origin bottom-left,
+/// y up; secondary screens can have negative coordinates).
+nonisolated enum DropdownLayout {
+    static let screenMargin: CGFloat = 8
+    static let gapBelowItem: CGFloat = 4
+
+    /// Just below the menu bar item with left edges aligned, pushed left if it would leave the screen.
+    static func topLeft(below itemFrame: NSRect, width: CGFloat, in visibleFrame: NSRect) -> NSPoint {
+        let rightmostX = visibleFrame.maxX - screenMargin - width
+        let x = max(visibleFrame.minX + screenMargin, min(itemFrame.minX, rightmostX))
+        let y = min(itemFrame.minY, visibleFrame.maxY) - gapBelowItem
+        return NSPoint(x: x, y: y)
     }
 
-    override func setFrame(_ frameRect: NSRect, display displayFlag: Bool, animate animateFlag: Bool) {
-        super.setFrame(pinned(frameRect), display: displayFlag, animate: animateFlag)
-    }
-
-    private func pinned(_ frame: NSRect) -> NSRect {
-        guard let topLeft = pinnedTopLeft else { return frame }
-        return NSRect(x: topLeft.x, y: topLeft.y - frame.height, width: frame.width, height: frame.height)
+    /// The frame for `size` hanging down from `topLeft`.
+    static func frame(topLeft: NSPoint, size: CGSize) -> NSRect {
+        NSRect(x: topLeft.x, y: topLeft.y - size.height, width: size.width, height: size.height)
     }
 }
 
