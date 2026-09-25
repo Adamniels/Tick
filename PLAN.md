@@ -260,6 +260,21 @@ Goal: see a day like Toggl and fix or add entries directly on a timeline (moved 
 
 ---
 
+## Cleanup after install (2026-09-25)
+
+A review pass after M7, one commit per item, with build, tests and a Release build as the gate.
+
+- [x] `TrackingService` extracted as the single start/stop/continue entry point; `PomodoroService` keeps phases and the popup (D38).
+- [x] Failed actions are shown, not just logged: `ErrorReporter` with a panel banner and a main-window alert (D39).
+- [x] Helpers moved to their owners: `TimeEntry.displayLabel`, `TimeEntry.queryLookback`, `EditTarget` next to `EntryEditor`.
+- [x] One shared delete confirmation for Entries and Calendar.
+- [x] Calendar split into view shell, `CalendarTimeline` (explicit inputs and callbacks) and `CalendarBlock`.
+- [x] Settings split into one file per tab under `Views/Settings/`; `ExportFile` moved out of `Services/`.
+- [x] Stale comments fixed, unused log categories removed.
+- [x] `CLAUDE.md` brief brought in line with the code and decisions.
+
+---
+
 ## Decision log
 
 | # | Date | Decision | Why |
@@ -303,6 +318,8 @@ Goal: see a day like Toggl and fix or add entries directly on a timeline (moved 
 | D35 | 2026-09-24 | Export lives in Settings → Data: all data as versioned JSON (`formatVersion` 1; ids kept, relationships as id references; ISO 8601 UTC exact to the millisecond; includes local settings) and time entries as CSV (Toggl-like columns plus ISO times). User-selected files become read-write in the sandbox. | Export is rare, so it belongs in Settings, not the sidebar (and Tick has no File menu). JSON is the complete, re-importable archive for moving to a new app or database; CSV is for spreadsheets and other trackers. ISO 8601 is portable; sub-millisecond precision isn't worth a Swift-only format. Import comes in M8. |
 | D36 | 2026-09-24 | One local store per CloudKit environment: the app reads its own `icloud-container-environment` entitlement at launch; Production uses `Tick-Production.store`, anything else keeps `Tick.store`. Export times are integer milliseconds. | Debug and release builds share the sandbox container (same bundle id). Opening the development store with production mirroring would have uploaded all test data to production. The entitlement, not the build configuration, is what decides the CloudKit environment. Integer milliseconds make export → import → export stable (formatters truncate float noise). |
 | D37 | 2026-09-24 | Hardened Runtime enabled for the app target, with no exceptions. | Required for notarization (Direct Distribution). Nothing Tick does (Carbon hotkeys, input idle time, panels, SwiftData/CloudKit, SMAppService, statically linked KeyboardShortcuts) needs a runtime exception. Tests still run with the injected test bundle. |
+| D38 | 2026-09-25 | `TrackingService` is the single entry point for start, stop and continue, applying D22; `PomodoroService` only handles phases, transitions and the popup, exposing `beginWorkBlock` and `endRun` to it. | All tracking went through `PomodoroService`, even without pomodoro, which hid where tracking starts and stops. Behavior unchanged; the existing tests cover it. |
+| D39 | 2026-09-25 | User actions run through one `ErrorReporter` (injected into services, in the environment for views): failures are logged and shown as a dismissible panel banner and a main-window alert. The per-second refresh only logs. | Six helpers only logged errors, so a failed save was invisible. The refresh loop would flood the UI with a persistent error. The service wiring is covered by review, not tests: forcing a real save failure would need a test-only hook in production code. |
 
 ## Open questions
 
