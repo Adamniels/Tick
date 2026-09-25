@@ -93,17 +93,7 @@ private struct CalendarDayView: View {
             // After layout, so the taller or shorter content can be scrolled to.
             DispatchQueue.main.async { scrollPosition.scrollTo(y: offset) }
         }
-        .confirmationDialog(
-            "Delete this entry?",
-            isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }),
-            presenting: pendingDelete
-        ) { entry in
-            Button("Delete", role: .destructive) {
-                errors.run("Deleting the entry") { try TimerService(context: modelContext).delete(entry) }
-            }
-        } message: { entry in
-            Text("\(entry.displayLabel), \(DurationFormat.clock(entry.duration())). This can't be undone.")
-        }
+        .confirmsDeletion(of: $pendingDelete)
     }
 
     // MARK: - Header

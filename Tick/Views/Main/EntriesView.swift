@@ -82,17 +82,7 @@ private struct EntriesList: View {
                 if let entry = entry(for: [selection].compactMap { $0 }) { pendingDelete = entry }
             }
         }
-        .confirmationDialog(
-            "Delete this entry?",
-            isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }),
-            presenting: pendingDelete
-        ) { entry in
-            Button("Delete", role: .destructive) {
-                errors.run("Deleting the entry") { try TimerService(context: modelContext).delete(entry) }
-            }
-        } message: { entry in
-            Text("\(entry.displayLabel), \(DurationFormat.clock(entry.duration())). This can't be undone.")
-        }
+        .confirmsDeletion(of: $pendingDelete)
     }
 
     private func entry(for ids: some Collection<TimeEntry.ID>) -> TimeEntry? {
