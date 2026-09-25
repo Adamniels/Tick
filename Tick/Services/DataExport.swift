@@ -1,7 +1,5 @@
 import Foundation
 import SwiftData
-import SwiftUI
-import UniformTypeIdentifiers
 
 /// Everything Tick stores, in a stable, documented shape (D35). Complete: ids are kept and
 /// relationships are id references, so the data can be rebuilt in another app or database.
@@ -195,24 +193,5 @@ enum DataExport {
     nonisolated static func csvField(_ value: String) -> String {
         guard value.contains(where: { $0 == "," || $0 == "\"" || $0 == "\n" || $0 == "\r" }) else { return value }
         return "\"" + value.replacingOccurrences(of: "\"", with: "\"\"") + "\""
-    }
-}
-
-/// Bytes handed to the system save panel (`fileExporter`).
-nonisolated struct ExportFile: FileDocument {
-    static let readableContentTypes: [UTType] = [.json, .commaSeparatedText]
-
-    let data: Data
-
-    init(data: Data) {
-        self.data = data
-    }
-
-    init(configuration: ReadConfiguration) throws {
-        data = configuration.file.regularFileContents ?? Data()
-    }
-
-    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
-        FileWrapper(regularFileWithContents: data)
     }
 }
