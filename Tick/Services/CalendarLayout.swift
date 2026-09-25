@@ -71,6 +71,11 @@ nonisolated enum CalendarLayout {
         return result
     }
 
+    /// The day starting at `day` (normally midnight). Days aren't always 24 hours (daylight saving).
+    static func interval(ofDay day: Date, calendar: Calendar) -> DateInterval {
+        DateInterval(start: day, end: calendar.date(byAdding: .day, value: 1, to: day) ?? day + 86_400)
+    }
+
     // MARK: - Geometry
 
     static func offset(of date: Date, from dayStart: Date, hourHeight: CGFloat) -> CGFloat {
