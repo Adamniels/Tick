@@ -1,4 +1,3 @@
-import OSLog
 import SwiftData
 import SwiftUI
 
@@ -32,6 +31,7 @@ private struct CalendarDayView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(TrackingService.self) private var tracking
+    @Environment(ErrorReporter.self) private var errors
     @AppStorage(AppSettings.Key.pomodoroEnabled) private var usePomodoro = false
     @Query private var entries: [TimeEntry]
     @State private var editing: EditTarget?
@@ -98,7 +98,9 @@ private struct CalendarDayView: View {
             isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }),
             presenting: pendingDelete
         ) { entry in
-            Button("Delete", role: .destructive) { perform { try TimerService(context: modelContext).delete(entry) } }
+            Button("Delete", role: .destructive) {
+                errors.run("Deleting the entry") { try TimerService(context: modelContext).delete(entry) }
+            }
         } message: { entry in
             Text("\(ReminderService.label(for: entry)), \(DurationFormat.clock(entry.duration())). This can't be undone.")
         }
@@ -262,7 +264,7 @@ private struct CalendarDayView: View {
             )
             .contextMenu {
                 Button("Edit…") { editing = .existing(entry) }
-                Button("Continue") { perform { try tracking.continueEntry(entry, usePomodoro: usePomodoro) } }
+                Button("Continue") { errors.run("Continuing the entry") { try tracking.continueEntry(entry, usePomodoro: usePomodoro) } }
                 Divider()
                 Button("Delete…", role: .destructive) { pendingDelete = entry }
             }
@@ -347,16 +349,9 @@ private struct CalendarDayView: View {
         draft.start = start
         if !entry.isRunning { draft.end = end }
         guard draft.validationError(now: .now) == nil else { return }
-        perform { try TimerService(context: modelContext).save(draft, to: entry) }
+        errors.run("Changing the entry") { try TimerService(context: modelContext).save(draft, to: entry) }
     }
 
-    private func perform(_ action: () throws -> Void) {
-        do {
-            try action()
-        } catch {
-            Log.timer.error("Calendar action failed: \(String(describing: error), privacy: .public)")
-        }
-    }
 }
 
 /// One entry on the timeline: tinted in its project color, like Toggl. The text adapts to the

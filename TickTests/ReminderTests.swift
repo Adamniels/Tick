@@ -163,10 +163,11 @@ final class ReminderServiceTests {
     let overlay = SpyOverlay()
     var now = TestCalendar.date(21, 8)  // Monday, before work hours
     var secondsSinceInput: TimeInterval = 0
-    lazy var pomodoro = PomodoroService(context: context, overlay: overlay, clock: { [unowned self] in self.now })
+    let errors = ErrorReporter()
+    lazy var pomodoro = PomodoroService(context: context, overlay: overlay, errors: errors, clock: { [unowned self] in self.now })
     lazy var tracking = TrackingService(context: context, pomodoro: pomodoro)
     lazy var service = ReminderService(
-        context: context, overlay: overlay, tracking: tracking,
+        context: context, overlay: overlay, errors: errors, tracking: tracking,
         settings: { ReminderSettings() },
         clock: { [unowned self] in self.now },
         secondsSinceInput: { [unowned self] in self.secondsSinceInput },

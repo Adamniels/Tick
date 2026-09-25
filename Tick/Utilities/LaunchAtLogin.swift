@@ -1,4 +1,3 @@
-import OSLog
 import ServiceManagement
 
 /// Launch at login through the system's login items for this app (`SMAppService.mainApp`).
@@ -17,15 +16,11 @@ enum LaunchAtLogin {
         }
     }
 
-    static func setEnabled(_ enabled: Bool) {
-        do {
-            if enabled {
-                try SMAppService.mainApp.register()
-            } else {
-                try SMAppService.mainApp.unregister()
-            }
-        } catch {
-            Log.storage.error("Changing launch at login failed: \(String(describing: error), privacy: .public)")
+    static func setEnabled(_ enabled: Bool) throws {
+        if enabled {
+            try SMAppService.mainApp.register()
+        } else {
+            try SMAppService.mainApp.unregister()
         }
     }
 

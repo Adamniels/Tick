@@ -10,6 +10,7 @@ final class ReminderService {
 
     private let context: ModelContext
     private let overlay: OverlayPresenting
+    private let errors: ErrorReporter
     private let tracking: TrackingService
     private let settings: () -> ReminderSettings
     private let clock: () -> Date
@@ -29,6 +30,7 @@ final class ReminderService {
     init(
         context: ModelContext,
         overlay: OverlayPresenting,
+        errors: ErrorReporter,
         tracking: TrackingService,
         settings: @escaping () -> ReminderSettings = { AppSettings.reminders },
         clock: @escaping () -> Date = { .now },
@@ -38,6 +40,7 @@ final class ReminderService {
     ) {
         self.context = context
         self.overlay = overlay
+        self.errors = errors
         self.tracking = tracking
         self.settings = settings
         self.clock = clock
@@ -111,7 +114,7 @@ final class ReminderService {
         let quickStarts = recentDistinctEntries(limit: 3).map { entry in
             OverlayAction(title: "▶ \(Self.label(for: entry))", role: .normal) { [weak self] in
                 self?.finishIdle()
-                self?.perform {
+                self?.perform("Starting the timer") {
                     try $0.tracking.continueEntry(
                         entry, usePomodoro: UserDefaults.standard.bool(forKey: AppSettings.Key.pomodoroEnabled),
                         at: $0.clock()
@@ -156,11 +159,11 @@ final class ReminderService {
                 },
                 OverlayAction(title: "Stop at selected time") { [weak self] in
                     self?.presentedForgotten = nil
-                    self?.perform { try $0.tracking.stop(at: input.date) }
+                    self?.perform("Stopping the timer") { try $0.tracking.stop(at: input.date) }
                 },
                 OverlayAction(title: "Stop now", role: .destructive) { [weak self] in
                     self?.presentedForgotten = nil
-                    self?.perform { try $0.tracking.stop(at: $0.clock()) }
+                    self?.perform("Stopping the timer") { try $0.tracking.stop(at: $0.clock()) }
                 },
             ]
         )
@@ -179,7 +182,7 @@ final class ReminderService {
                 OverlayAction(title: "Remove away time", role: .primary) { [weak self] in
                     self?.presentedAway = nil
                     // Split around the gap: end at departure, continue as a new entry from now.
-                    self?.perform {
+                    self?.perform("Removing the away time") {
                         try $0.timer.stop(at: interval.start)
                         try $0.timer.continueEntry(entry, isPomodoro: entry.isPomodoro, at: $0.clock())
                     }
@@ -189,7 +192,7 @@ final class ReminderService {
                 },
                 OverlayAction(title: "Stop at \(left)", role: .destructive) { [weak self] in
                     self?.presentedAway = nil
-                    self?.perform { try $0.tracking.stop(at: interval.start) }
+                    self?.perform("Stopping the timer") { try $0.tracking.stop(at: interval.start) }
                 },
             ]
         )
@@ -238,12 +241,8 @@ final class ReminderService {
         return parts.isEmpty ? "Your timer" : parts.joined(separator: " · ")
     }
 
-    private func perform(_ action: (ReminderService) throws -> Void) {
-        do {
-            try action(self)
-        } catch {
-            Log.timer.error("Reminder action failed: \(String(describing: error), privacy: .public)")
-        }
+    private func perform(_ action: String, _ body: (ReminderService) throws -> Void) {
+        errors.run(action) { try body(self) }
     }
 
     private func observeSystemEvents() {

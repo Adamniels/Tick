@@ -7,16 +7,18 @@ final class MainWindowController {
     private let modelContainer: ModelContainer
     private let tracking: TrackingService
     private let pomodoro: PomodoroService
+    private let errors: ErrorReporter
     private let onTestPopup: () -> Void
     private var window: NSWindow?
 
     init(
         modelContainer: ModelContainer, tracking: TrackingService, pomodoro: PomodoroService,
-        onTestPopup: @escaping () -> Void
+        errors: ErrorReporter, onTestPopup: @escaping () -> Void
     ) {
         self.modelContainer = modelContainer
         self.tracking = tracking
         self.pomodoro = pomodoro
+        self.errors = errors
         self.onTestPopup = onTestPopup
     }
 
@@ -33,6 +35,7 @@ final class MainWindowController {
                 .modelContainer(modelContainer)
                 .environment(tracking)
                 .environment(pomodoro)
+                .environment(errors)
         )
         hostingController.sceneBridgingOptions = [.toolbars, .title]
         let window = NSWindow(contentViewController: hostingController)

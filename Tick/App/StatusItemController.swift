@@ -15,6 +15,7 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         modelContainer: ModelContainer,
         tracking: TrackingService,
         pomodoro: PomodoroService,
+        errors: ErrorReporter,
         storageError: String?,
         onOpenMainWindow: @escaping () -> Void
     ) {
@@ -27,6 +28,7 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         .modelContainer(modelContainer)
         .environment(tracking)
         .environment(pomodoro)
+        .environment(errors)
         let hostingController = NSHostingController(rootView: panel)
         hostingController.sizingOptions = [.preferredContentSize]
         popover.contentViewController = hostingController

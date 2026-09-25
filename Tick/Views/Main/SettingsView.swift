@@ -37,6 +37,7 @@ struct SettingsView: View {
     private let soundNames = SystemSound.names
     @State private var launchAtLogin = LaunchAtLogin.State.disabled
     @Environment(\.modelContext) private var modelContext
+    @Environment(ErrorReporter.self) private var errors
     @State private var exportFile: ExportFile?
     @State private var exportType = UTType.json
     @State private var exportName = ""
@@ -63,7 +64,7 @@ struct SettingsView: View {
                 Toggle("Open Tick at login", isOn: Binding(
                     get: { launchAtLogin != .disabled },
                     set: { enabled in
-                        LaunchAtLogin.setEnabled(enabled)
+                        errors.run("Changing launch at login") { try LaunchAtLogin.setEnabled(enabled) }
                         launchAtLogin = LaunchAtLogin.state
                     }
                 ))

@@ -1,4 +1,3 @@
-import OSLog
 import SwiftData
 import SwiftUI
 
@@ -53,6 +52,7 @@ private struct EntriesList: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(TrackingService.self) private var tracking
+    @Environment(ErrorReporter.self) private var errors
     @AppStorage(AppSettings.Key.pomodoroEnabled) private var usePomodoro = false
     @Query private var entries: [TimeEntry]
     @State private var selection: TimeEntry.ID?
@@ -93,7 +93,9 @@ private struct EntriesList: View {
             .contextMenu(forSelectionType: TimeEntry.ID.self) { ids in
                 if let entry = entry(for: ids) {
                     Button("Edit…") { onEdit(entry) }
-                    Button("Continue") { perform { try tracking.continueEntry(entry, usePomodoro: usePomodoro) } }
+                    Button("Continue") {
+                        errors.run("Continuing the entry") { try tracking.continueEntry(entry, usePomodoro: usePomodoro) }
+                    }
                     Divider()
                     Button("Delete…", role: .destructive) { pendingDelete = entry }
                 }
@@ -110,11 +112,7 @@ private struct EntriesList: View {
             presenting: pendingDelete
         ) { entry in
             Button("Delete", role: .destructive) {
-                do {
-                    try TimerService(context: modelContext).delete(entry)
-                } catch {
-                    Log.timer.error("Delete failed: \(String(describing: error), privacy: .public)")
-                }
+                errors.run("Deleting the entry") { try TimerService(context: modelContext).delete(entry) }
             }
         } message: { entry in
             Text("\(ReminderService.label(for: entry)), \(DurationFormat.clock(entry.duration())). This can't be undone.")
@@ -124,14 +122,6 @@ private struct EntriesList: View {
     private func entry(for ids: some Collection<TimeEntry.ID>) -> TimeEntry? {
         guard let id = ids.first else { return nil }
         return entries.first { $0.id == id }
-    }
-
-    private func perform(_ action: () throws -> Void) {
-        do {
-            try action()
-        } catch {
-            Log.timer.error("Entry action failed: \(String(describing: error), privacy: .public)")
-        }
     }
 
     private static func title(for day: Date) -> String {

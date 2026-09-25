@@ -1,6 +1,5 @@
 import Foundation
 import Observation
-import OSLog
 import SwiftData
 
 /// Pomodoro phases on top of the regular timer: transitions, the per-second check and the popup.
@@ -13,6 +12,7 @@ import SwiftData
 @Observable final class PomodoroService {
     @ObservationIgnored private let context: ModelContext
     @ObservationIgnored private let overlay: OverlayPresenting
+    @ObservationIgnored private let errors: ErrorReporter
     @ObservationIgnored private let settings: () -> PomodoroSettings
     /// The time popup buttons act at. Injected so tests can control it.
     @ObservationIgnored private let clock: () -> Date
@@ -22,11 +22,13 @@ import SwiftData
     init(
         context: ModelContext,
         overlay: OverlayPresenting,
+        errors: ErrorReporter,
         settings: @escaping () -> PomodoroSettings = { AppSettings.pomodoro },
         clock: @escaping () -> Date = { .now }
     ) {
         self.context = context
         self.overlay = overlay
+        self.errors = errors
         self.settings = settings
         self.clock = clock
     }
@@ -187,13 +189,13 @@ import SwiftData
                 message: "Time for a \(next == .longBreak ? "long" : "short") break (\(minutes) min).",
                 actions: [
                     OverlayAction(title: "Start break", role: .primary) { [weak self] in
-                        self?.perform { try $0.startBreak(after: session, at: $0.clock()) }
+                        self?.perform("Starting the break") { try $0.startBreak(after: session, at: $0.clock()) }
                     },
                     OverlayAction(title: extendTitle) { [weak self] in
-                        self?.perform { try $0.extend(session, at: $0.clock()) }
+                        self?.perform("Adding time") { try $0.extend(session, at: $0.clock()) }
                     },
                     OverlayAction(title: "End pomodoro", role: .destructive) { [weak self] in
-                        self?.perform { try $0.end(at: $0.clock()) }
+                        self?.perform("Ending the pomodoro") { try $0.end(at: $0.clock()) }
                     },
                 ]
             )
@@ -205,24 +207,20 @@ import SwiftData
                 message: "Ready for work block \(completed + 1)?",
                 actions: [
                     OverlayAction(title: "Start next block", role: .primary) { [weak self] in
-                        self?.perform { try $0.startNextBlock(after: session, at: $0.clock()) }
+                        self?.perform("Starting the next block") { try $0.startNextBlock(after: session, at: $0.clock()) }
                     },
                     OverlayAction(title: "Extend break \(settings.extendMinutes) min") { [weak self] in
-                        self?.perform { try $0.extend(session, at: $0.clock()) }
+                        self?.perform("Adding time") { try $0.extend(session, at: $0.clock()) }
                     },
                     OverlayAction(title: "End", role: .destructive) { [weak self] in
-                        self?.perform { try $0.end(at: $0.clock()) }
+                        self?.perform("Ending the pomodoro") { try $0.end(at: $0.clock()) }
                     },
                 ]
             )
         }
     }
 
-    private func perform(_ action: (PomodoroService) throws -> Void) {
-        do {
-            try action(self)
-        } catch {
-            Log.pomodoro.error("Pomodoro action failed: \(String(describing: error), privacy: .public)")
-        }
+    private func perform(_ action: String, _ body: (PomodoroService) throws -> Void) {
+        errors.run(action) { try body(self) }
     }
 }

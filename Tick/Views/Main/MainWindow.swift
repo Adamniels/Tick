@@ -9,6 +9,7 @@ struct MainWindow: View {
     }
 
     @State private var selection: Section? = .entries
+    @Environment(ErrorReporter.self) private var errors
 
     var body: some View {
         NavigationSplitView {
@@ -33,5 +34,13 @@ struct MainWindow: View {
             }
         }
         .frame(minWidth: 560, minHeight: 360)
+        .alert(
+            "Something went wrong",
+            isPresented: Binding(get: { errors.message != nil }, set: { if !$0 { errors.dismiss() } })
+        ) {
+            Button("OK", action: errors.dismiss)
+        } message: {
+            Text(errors.message ?? "")
+        }
     }
 }

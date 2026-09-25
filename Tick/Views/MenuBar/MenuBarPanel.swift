@@ -1,4 +1,3 @@
-import OSLog
 import SwiftData
 import SwiftUI
 
@@ -10,6 +9,7 @@ struct MenuBarPanel: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(TrackingService.self) private var tracking
     @Environment(PomodoroService.self) private var pomodoro
+    @Environment(ErrorReporter.self) private var errors
     @AppStorage(AppSettings.Key.pomodoroEnabled) private var usePomodoro = false
     @Query(filter: #Predicate<TimeEntry> { $0.end == nil }, sort: \TimeEntry.start, order: .reverse)
     private var running: [TimeEntry]
@@ -18,6 +18,18 @@ struct MenuBarPanel: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            if let message = errors.message {
+                HStack(alignment: .top) {
+                    Label(message, systemImage: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.red)
+                        .font(.caption)
+                        .lineLimit(3)
+                    Spacer()
+                    Button("Dismiss", systemImage: "xmark", action: errors.dismiss)
+                        .labelStyle(.iconOnly)
+                        .buttonStyle(.borderless)
+                }
+            }
             if let storageError {
                 Label("Not saving: \(storageError)", systemImage: "exclamationmark.triangle.fill")
                     .foregroundStyle(.red)
@@ -27,30 +39,30 @@ struct MenuBarPanel: View {
 
             let session = activeSessions.first
             if let entry = running.first {
-                RunningTimerView(entry: entry) { perform { try tracking.stop() } }
+                RunningTimerView(entry: entry) { errors.run("Stopping the timer") { try tracking.stop() } }
                     .id(entry.id)  // Fresh edit state per entry; a pending edit lands on its own entry.
             } else if session?.phaseValue.isBreak != true {
                 StartTimerForm { description, project, tags in
-                    perform { try tracking.start(description: description, project: project, tags: tags, usePomodoro: usePomodoro) }
+                    errors.run("Starting the timer") {
+                        try tracking.start(description: description, project: project, tags: tags, usePomodoro: usePomodoro)
+                    }
                 }
             }
             if let session {
                 PomodoroStatusView(
                     session: session,
-                    onStartNextBlock: { perform { try pomodoro.startNextBlock(after: session) } },
-                    onEnd: { perform { try pomodoro.end() } }
+                    onStartNextBlock: { errors.run("Starting the next block") { try pomodoro.startNextBlock(after: session) } },
+                    onEnd: { errors.run("Ending the pomodoro") { try pomodoro.end() } }
                 )
             }
 
             Divider()
             TodayEntriesView(
-                onContinue: { entry in perform { try tracking.continueEntry(entry, usePomodoro: usePomodoro) } },
+                onContinue: { entry in
+                    errors.run("Continuing the entry") { try tracking.continueEntry(entry, usePomodoro: usePomodoro) }
+                },
                 onDelete: { entry in
-                    do {
-                        try TimerService(context: modelContext).delete(entry)
-                    } catch {
-                        Log.timer.error("Delete failed: \(String(describing: error), privacy: .public)")
-                    }
+                    errors.run("Deleting the entry") { try TimerService(context: modelContext).delete(entry) }
                 }
             )
             Divider()
@@ -66,13 +78,6 @@ struct MenuBarPanel: View {
         .frame(width: 340)
     }
 
-    private func perform(_ action: () throws -> Void) {
-        do {
-            try action()
-        } catch {
-            Log.timer.error("Timer action failed: \(String(describing: error), privacy: .public)")
-        }
-    }
 }
 
 private struct RunningTimerView: View {

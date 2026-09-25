@@ -94,7 +94,8 @@ final class OverlayController: OverlayPresenting {
         present(queue.removeFirst())
     }
 
-    private func perform(_ action: OverlayAction) {
+    /// The user chose a button: close the popup, then run its action.
+    private func choose(_ action: OverlayAction) {
         guard current != nil else { return }
         closePanels()
         current = nil
@@ -113,7 +114,7 @@ final class OverlayController: OverlayPresenting {
             let panel = OverlayPanel(screen: screen)
             let hostingView = NSHostingView(
                 rootView: OverlayView(request: request, appearance: appearance) { [weak self] action in
-                    self?.perform(action)
+                    self?.choose(action)
                 }
             )
             // The panel is sized to its screen, never to the SwiftUI content.

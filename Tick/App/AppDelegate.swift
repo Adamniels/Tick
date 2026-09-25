@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let modelContainer: ModelContainer
     private let storageError: String?
     private let overlay = OverlayController()
+    private let errors = ErrorReporter()
     private var pomodoro: PomodoroService?
     private var reminders: ReminderService?
     private var statusItemController: StatusItemController?
@@ -29,10 +30,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // The unit test host needs no UI.
         guard !Persistence.isRunningTests else { return }
 
-        let pomodoro = PomodoroService(context: modelContainer.mainContext, overlay: overlay)
+        let pomodoro = PomodoroService(context: modelContainer.mainContext, overlay: overlay, errors: errors)
         let tracking = TrackingService(context: modelContainer.mainContext, pomodoro: pomodoro)
         let mainWindowController = MainWindowController(
-            modelContainer: modelContainer, tracking: tracking, pomodoro: pomodoro
+            modelContainer: modelContainer, tracking: tracking, pomodoro: pomodoro, errors: errors
         ) { [overlay] in
             overlay.show(.test())
         }
@@ -40,10 +41,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             modelContainer: modelContainer,
             tracking: tracking,
             pomodoro: pomodoro,
+            errors: errors,
             storageError: storageError,
             onOpenMainWindow: { mainWindowController.show() }
         )
-        let reminders = ReminderService(context: modelContainer.mainContext, overlay: overlay, tracking: tracking)
+        let reminders = ReminderService(
+            context: modelContainer.mainContext, overlay: overlay, errors: errors, tracking: tracking
+        )
         reminders.onStartNewTimer = { [weak statusItemController] in statusItemController?.openPanel() }
         self.pomodoro = pomodoro
         self.reminders = reminders
@@ -75,9 +79,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         mainWindowController: MainWindowController
     ) {
         let context = modelContainer.mainContext
-        KeyboardShortcuts.onKeyUp(for: .toggleTimer) { [weak statusItemController] in
+        KeyboardShortcuts.onKeyUp(for: .toggleTimer) { [weak statusItemController, errors] in
             let timer = TimerService(context: context)
-            do {
+            errors.run("Start or stop") {
                 if try !timer.runningEntries().isEmpty {
                     try tracking.stop()
                 } else if let latest = try timer.latestEntry() {
@@ -86,8 +90,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 } else {
                     statusItemController?.openPanel()
                 }
-            } catch {
-                Log.timer.error("Shortcut failed: \(String(describing: error), privacy: .public)")
             }
         }
         KeyboardShortcuts.onKeyUp(for: .openPanel) { [weak statusItemController] in
@@ -115,7 +117,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             statusItemController.show(entry: entry, session: session, now: now)
             return session?.plannedEnd ?? entry?.start
         } catch {
-            Log.timer.error("Refresh failed: \(String(describing: error), privacy: .public)")
+            // Logged only: this runs every second, and a persistent failure would flood the UI.
+            Log.app.error("Refresh failed: \(String(describing: error), privacy: .public)")
             return nil
         }
     }

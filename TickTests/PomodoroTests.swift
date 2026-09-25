@@ -42,8 +42,9 @@ final class PomodoroServiceTests {
     let overlay = SpyOverlay()
     var settings = PomodoroSettings()
     var now = Date(timeIntervalSinceReferenceDate: 800_000_000)
+    let errors = ErrorReporter()
     lazy var service = PomodoroService(
-        context: context, overlay: overlay,
+        context: context, overlay: overlay, errors: errors,
         settings: { [unowned self] in self.settings },
         clock: { [unowned self] in self.now }
     )
