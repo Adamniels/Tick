@@ -26,7 +26,7 @@ Status legend: ⬜ not started · 🟨 in progress · ✅ done
 | 3 | Reminders | ✅ |
 | 4 | Main window: entries | ✅ |
 | 5 | Statistics | ✅ |
-| 6 | Polish and install | 🟨 |
+| 6 | Polish and install | ✅ (installed and verified 2026-09-25; two-Mac test still open, D18) |
 | 7 | Calendar day view (+ data export) | ✅ |
 | 8 | Later: Toggl import | ⬜ |
 
@@ -199,10 +199,10 @@ Goal: see where the time goes.
 Goal: an app you install once and forget about.
 
 - [x] Add `KeyboardShortcuts` 3.1.0 (SPM, pre-approved in the brief; `Package.resolved` committed).
-- [ ] Global shortcuts, recorded in Settings → Shortcuts, no presets (D33): **Start or stop timer** (stops the running timer, or continues the most recent entry), **Open Tick panel**, and **Open Tick window** (added at Adam's request).
-- [ ] Launch at login toggle via `SMAppService.mainApp` (Settings → General), including the "requires approval" case.
-- [ ] Settings reorganized into tabs: General, Pomodoro, Reminders, Popup, Shortcuts.
-- [ ] App icon (generated: white stopwatch on an orange-red gradient). The menu bar icon stays the SF Symbol `stopwatch`, a template image.
+- [x] Global shortcuts, recorded in Settings → Shortcuts, no presets (D33): **Start or stop timer** (stops the running timer, or continues the most recent entry), **Open Tick panel**, and **Open Tick window** (added at Adam's request).
+- [x] Launch at login toggle via `SMAppService.mainApp` (Settings → General), including the "requires approval" case.
+- [x] Settings reorganized into tabs: General, Pomodoro, Reminders, Popup, Shortcuts.
+- [x] App icon (generated: white stopwatch on an orange-red gradient). The menu bar icon stays the SF Symbol `stopwatch`, a template image.
 - [ ] Two-Mac sync test (deferred from M1, D18), see the install steps below.
 
 ### Install (Adam; needs your Apple account)
@@ -218,10 +218,10 @@ Goal: an app you install once and forget about.
    - Run a 1-minute pomodoro with both awake: both show the popup, and answering on one closes it on the other (D4).
 
 ### Manual verification (Adam)
-- [ ] Record both shortcuts; start/stop and open panel work from any app.
-- [ ] Settings tabs all show their settings; changes still take effect.
-- [ ] The installed app shows the new icon in Finder and Launchpad.
-- [ ] After a restart (or log out and in), Tick starts by itself.
+- [x] Record both shortcuts; start/stop and open panel work from any app.
+- [x] Settings tabs all show their settings; changes still take effect.
+- [x] The installed app shows the new icon in Finder and Launchpad.
+- [x] After a restart (or log out and in), Tick starts by itself.
 
 **Done when:** both Macs run the archived build from `/Applications`, start at login, and sync.
 
