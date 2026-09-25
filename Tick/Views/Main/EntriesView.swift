@@ -26,7 +26,6 @@ private struct EntriesList: View {
     let onEdit: (TimeEntry) -> Void
     let onShowMore: () -> Void
 
-    @Environment(\.modelContext) private var modelContext
     @Environment(TrackingService.self) private var tracking
     @Environment(ErrorReporter.self) private var errors
     @AppStorage(AppSettings.Key.pomodoroEnabled) private var usePomodoro = false
