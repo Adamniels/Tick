@@ -5,12 +5,17 @@ import SwiftUI
 /// The main window, created on first use and reused afterwards (decision D16).
 final class MainWindowController {
     private let modelContainer: ModelContainer
+    private let tracking: TrackingService
     private let pomodoro: PomodoroService
     private let onTestPopup: () -> Void
     private var window: NSWindow?
 
-    init(modelContainer: ModelContainer, pomodoro: PomodoroService, onTestPopup: @escaping () -> Void) {
+    init(
+        modelContainer: ModelContainer, tracking: TrackingService, pomodoro: PomodoroService,
+        onTestPopup: @escaping () -> Void
+    ) {
         self.modelContainer = modelContainer
+        self.tracking = tracking
         self.pomodoro = pomodoro
         self.onTestPopup = onTestPopup
     }
@@ -26,6 +31,7 @@ final class MainWindowController {
         let hostingController = NSHostingController(
             rootView: MainWindow(onTestPopup: onTestPopup)
                 .modelContainer(modelContainer)
+                .environment(tracking)
                 .environment(pomodoro)
         )
         hostingController.sceneBridgingOptions = [.toolbars, .title]

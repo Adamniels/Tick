@@ -52,7 +52,7 @@ private struct EntriesList: View {
     let onShowMore: () -> Void
 
     @Environment(\.modelContext) private var modelContext
-    @Environment(PomodoroService.self) private var pomodoro
+    @Environment(TrackingService.self) private var tracking
     @AppStorage(AppSettings.Key.pomodoroEnabled) private var usePomodoro = false
     @Query private var entries: [TimeEntry]
     @State private var selection: TimeEntry.ID?
@@ -93,7 +93,7 @@ private struct EntriesList: View {
             .contextMenu(forSelectionType: TimeEntry.ID.self) { ids in
                 if let entry = entry(for: ids) {
                     Button("Edit…") { onEdit(entry) }
-                    Button("Continue") { perform { try $0.continueEntry(entry, usePomodoro: usePomodoro) } }
+                    Button("Continue") { perform { try tracking.continueEntry(entry, usePomodoro: usePomodoro) } }
                     Divider()
                     Button("Delete…", role: .destructive) { pendingDelete = entry }
                 }
@@ -126,9 +126,9 @@ private struct EntriesList: View {
         return entries.first { $0.id == id }
     }
 
-    private func perform(_ action: (PomodoroService) throws -> Void) {
+    private func perform(_ action: () throws -> Void) {
         do {
-            try action(pomodoro)
+            try action()
         } catch {
             Log.timer.error("Entry action failed: \(String(describing: error), privacy: .public)")
         }

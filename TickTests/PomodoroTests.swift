@@ -47,6 +47,7 @@ final class PomodoroServiceTests {
         settings: { [unowned self] in self.settings },
         clock: { [unowned self] in self.now }
     )
+    lazy var tracking = TrackingService(context: context, pomodoro: service)
 
     var context: ModelContext { container.mainContext }
     var timer: TimerService { TimerService(context: context) }
@@ -59,7 +60,7 @@ final class PomodoroServiceTests {
     }
 
     private func startWorking(at date: Date? = nil) throws {
-        try service.start(description: "Mini games", project: nil, tags: [], usePomodoro: true, at: date ?? t0)
+        try tracking.start(description: "Mini games", project: nil, tags: [], usePomodoro: true, at: date ?? t0)
     }
 
     @Test func startingWithPomodoroCreatesAWorkBlockAndAPomodoroEntry() throws {
@@ -163,7 +164,7 @@ final class PomodoroServiceTests {
     @Test func stoppingEarlyEndsTheRunWithoutCountingTheBlock() throws {
         try startWorking()
         let session = try #require(try service.activeSession())
-        try service.stop(at: t0 + 60)
+        try tracking.stop(at: t0 + 60)
 
         #expect(try service.activeSession() == nil)
         #expect(!session.completed)
@@ -171,7 +172,7 @@ final class PomodoroServiceTests {
 
     @Test func startingWithoutPomodoroEndsTheRun() throws {
         try startWorking()
-        try service.start(description: "Email", project: nil, tags: [], usePomodoro: false, at: t0 + 60)
+        try tracking.start(description: "Email", project: nil, tags: [], usePomodoro: false, at: t0 + 60)
 
         #expect(try service.activeSession() == nil)
         #expect(try timer.runningEntries().first?.isPomodoro == false)
@@ -180,7 +181,7 @@ final class PomodoroServiceTests {
     @Test func switchingTaskMidBlockKeepsTheBlock() throws {
         try startWorking()
         let block = try #require(try service.activeSession())
-        try service.start(description: "Other task", project: nil, tags: [], usePomodoro: true, at: t0 + 60)
+        try tracking.start(description: "Other task", project: nil, tags: [], usePomodoro: true, at: t0 + 60)
 
         #expect(try service.activeSession() == block)
     }

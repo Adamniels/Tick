@@ -30,16 +30,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard !Persistence.isRunningTests else { return }
 
         let pomodoro = PomodoroService(context: modelContainer.mainContext, overlay: overlay)
-        let mainWindowController = MainWindowController(modelContainer: modelContainer, pomodoro: pomodoro) { [overlay] in
+        let tracking = TrackingService(context: modelContainer.mainContext, pomodoro: pomodoro)
+        let mainWindowController = MainWindowController(
+            modelContainer: modelContainer, tracking: tracking, pomodoro: pomodoro
+        ) { [overlay] in
             overlay.show(.test())
         }
         let statusItemController = StatusItemController(
             modelContainer: modelContainer,
+            tracking: tracking,
             pomodoro: pomodoro,
             storageError: storageError,
             onOpenMainWindow: { mainWindowController.show() }
         )
-        let reminders = ReminderService(context: modelContainer.mainContext, overlay: overlay, pomodoro: pomodoro)
+        let reminders = ReminderService(context: modelContainer.mainContext, overlay: overlay, tracking: tracking)
         reminders.onStartNewTimer = { [weak statusItemController] in statusItemController?.openPanel() }
         self.pomodoro = pomodoro
         self.reminders = reminders
@@ -47,7 +51,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.statusItemController = statusItemController
 
         registerShortcuts(
-            pomodoro: pomodoro, statusItemController: statusItemController, mainWindowController: mainWindowController
+            tracking: tracking, statusItemController: statusItemController, mainWindowController: mainWindowController
         )
 
         saveObserver = NotificationCenter.default.addObserver(
@@ -66,7 +70,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Start or stop: stops the running timer, or continues the most recent entry (D33).
     private func registerShortcuts(
-        pomodoro: PomodoroService,
+        tracking: TrackingService,
         statusItemController: StatusItemController,
         mainWindowController: MainWindowController
     ) {
@@ -75,10 +79,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let timer = TimerService(context: context)
             do {
                 if try !timer.runningEntries().isEmpty {
-                    try pomodoro.stop()
+                    try tracking.stop()
                 } else if let latest = try timer.latestEntry() {
                     let usePomodoro = UserDefaults.standard.bool(forKey: AppSettings.Key.pomodoroEnabled)
-                    try pomodoro.continueEntry(latest, usePomodoro: usePomodoro)
+                    try tracking.continueEntry(latest, usePomodoro: usePomodoro)
                 } else {
                     statusItemController?.openPanel()
                 }

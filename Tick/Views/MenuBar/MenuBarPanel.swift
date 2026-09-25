@@ -8,6 +8,7 @@ struct MenuBarPanel: View {
     let onOpenMainWindow: () -> Void
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(TrackingService.self) private var tracking
     @Environment(PomodoroService.self) private var pomodoro
     @AppStorage(AppSettings.Key.pomodoroEnabled) private var usePomodoro = false
     @Query(filter: #Predicate<TimeEntry> { $0.end == nil }, sort: \TimeEntry.start, order: .reverse)
@@ -26,24 +27,24 @@ struct MenuBarPanel: View {
 
             let session = activeSessions.first
             if let entry = running.first {
-                RunningTimerView(entry: entry) { perform { try $0.stop() } }
+                RunningTimerView(entry: entry) { perform { try tracking.stop() } }
                     .id(entry.id)  // Fresh edit state per entry; a pending edit lands on its own entry.
             } else if session?.phaseValue.isBreak != true {
                 StartTimerForm { description, project, tags in
-                    perform { try $0.start(description: description, project: project, tags: tags, usePomodoro: usePomodoro) }
+                    perform { try tracking.start(description: description, project: project, tags: tags, usePomodoro: usePomodoro) }
                 }
             }
             if let session {
                 PomodoroStatusView(
                     session: session,
-                    onStartNextBlock: { perform { try $0.startNextBlock(after: session) } },
-                    onEnd: { perform { try $0.end() } }
+                    onStartNextBlock: { perform { try pomodoro.startNextBlock(after: session) } },
+                    onEnd: { perform { try pomodoro.end() } }
                 )
             }
 
             Divider()
             TodayEntriesView(
-                onContinue: { entry in perform { try $0.continueEntry(entry, usePomodoro: usePomodoro) } },
+                onContinue: { entry in perform { try tracking.continueEntry(entry, usePomodoro: usePomodoro) } },
                 onDelete: { entry in
                     do {
                         try TimerService(context: modelContext).delete(entry)
@@ -65,9 +66,9 @@ struct MenuBarPanel: View {
         .frame(width: 340)
     }
 
-    private func perform(_ action: (PomodoroService) throws -> Void) {
+    private func perform(_ action: () throws -> Void) {
         do {
-            try action(pomodoro)
+            try action()
         } catch {
             Log.timer.error("Timer action failed: \(String(describing: error), privacy: .public)")
         }

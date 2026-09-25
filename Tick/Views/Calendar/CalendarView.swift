@@ -31,7 +31,7 @@ private struct CalendarDayView: View {
     let onZoom: (Double) -> Void
 
     @Environment(\.modelContext) private var modelContext
-    @Environment(PomodoroService.self) private var pomodoro
+    @Environment(TrackingService.self) private var tracking
     @AppStorage(AppSettings.Key.pomodoroEnabled) private var usePomodoro = false
     @Query private var entries: [TimeEntry]
     @State private var editing: EditTarget?
@@ -262,7 +262,7 @@ private struct CalendarDayView: View {
             )
             .contextMenu {
                 Button("Edit…") { editing = .existing(entry) }
-                Button("Continue") { perform { try pomodoro.continueEntry(entry, usePomodoro: usePomodoro) } }
+                Button("Continue") { perform { try tracking.continueEntry(entry, usePomodoro: usePomodoro) } }
                 Divider()
                 Button("Delete…", role: .destructive) { pendingDelete = entry }
             }

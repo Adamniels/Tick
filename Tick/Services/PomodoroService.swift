@@ -3,7 +3,9 @@ import Observation
 import OSLog
 import SwiftData
 
-/// Pomodoro on top of the regular timer, plus the pomodoro-aware start and stop the panel uses.
+/// Pomodoro phases on top of the regular timer: transitions, the per-second check and the popup.
+/// Starting and stopping tracking goes through `TrackingService` (D38), which calls `beginWorkBlock`
+/// and `endRun` here.
 ///
 /// All state lives in synced `PomodoroSession`s. Each Mac calls `update(at:)` every second and
 /// derives the popup from the active phase's `plannedEnd` (decision D4), so a popup handled on
@@ -45,28 +47,31 @@ import SwiftData
         return try context.fetchCount(descriptor)
     }
 
-    // MARK: - Starting and stopping (the panel)
+    // MARK: - Runs (called by TrackingService)
 
-    func start(description: String, project: Project?, tags: [Tag], usePomodoro: Bool, at now: Date = .now) throws {
-        try timer.start(description: description, project: project, tags: tags, isPomodoro: usePomodoro, at: now)
-        if usePomodoro {
-            try ensureWorkBlock(at: now)
-        } else {
-            try endRun(at: now, stopTimer: false)
+    /// Tracking started with pomodoro: keep the current work block (switching task mid-block),
+    /// end a break and start the next block, or start a new run.
+    func beginWorkBlock(at now: Date) throws {
+        let active = try activeSession()
+        switch active?.phaseValue {
+        case .work:
+            return
+        case .shortBreak, .longBreak:
+            finish(active!, completed: true, at: now)
+            insertSession(runID: active!.runID, phase: .work, at: now)
+        case nil:
+            insertSession(runID: UUID(), phase: .work, at: now)
         }
+        try context.save()
     }
 
-    func continueEntry(_ entry: TimeEntry, usePomodoro: Bool, at now: Date = .now) throws {
-        try start(
-            description: entry.entryDescription, project: entry.project, tags: entry.tags ?? [],
-            usePomodoro: usePomodoro, at: now
-        )
-    }
-
-    /// Stopping the timer ends the pomodoro.
-    func stop(at now: Date = .now) throws {
-        try timer.stop(at: now)
-        try endRun(at: now, stopTimer: false)
+    /// Ends the active run, if any. A work block ended at or after its planned end counts as done;
+    /// one cut short doesn't.
+    func endRun(at now: Date) throws {
+        if let active = try activeSession() {
+            finish(active, completed: active.phaseValue.isBreak || now >= active.plannedEnd, at: now)
+        }
+        try context.save()
     }
 
     // MARK: - Phase transitions (popup buttons and panel)
@@ -101,7 +106,8 @@ import SwiftData
 
     /// "End pomodoro" also stops the timer (D22).
     func end(at now: Date = .now) throws {
-        try endRun(at: now, stopTimer: true)
+        try endRun(at: now)
+        try timer.stop(at: now)
     }
 
     // MARK: - Tick
@@ -147,32 +153,6 @@ import SwiftData
         guard active.count > 1 else { return }
         for (older, newer) in zip(active, active.dropFirst()) {
             older.endedAt = max(newer.start, older.start)
-        }
-        try context.save()
-    }
-
-    private func ensureWorkBlock(at now: Date) throws {
-        let active = try activeSession()
-        switch active?.phaseValue {
-        case .work:
-            return  // Switching task mid-block keeps the block.
-        case .shortBreak, .longBreak:
-            // Starting to work during a break starts the next block.
-            finish(active!, completed: true, at: now)
-            insertSession(runID: active!.runID, phase: .work, at: now)
-        case nil:
-            insertSession(runID: UUID(), phase: .work, at: now)
-        }
-        try context.save()
-    }
-
-    private func endRun(at now: Date, stopTimer: Bool) throws {
-        if let active = try activeSession() {
-            // A work block ended from its popup counts as done; one cut short doesn't.
-            finish(active, completed: active.phaseValue.isBreak || now >= active.plannedEnd, at: now)
-        }
-        if stopTimer {
-            try timer.stop(at: now)
         }
         try context.save()
     }
