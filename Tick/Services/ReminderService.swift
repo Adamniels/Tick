@@ -112,7 +112,7 @@ final class ReminderService {
     private func idleRequest() -> OverlayRequest {
         let snooze = settings().snoozeMinutes
         let quickStarts = recentDistinctEntries(limit: 3).map { entry in
-            OverlayAction(title: "▶ \(Self.label(for: entry))", role: .normal) { [weak self] in
+            OverlayAction(title: "▶ \(entry.displayLabel)", role: .normal) { [weak self] in
                 self?.finishIdle()
                 self?.perform("Starting the timer") {
                     try $0.tracking.continueEntry(
@@ -149,7 +149,7 @@ final class ReminderService {
             id: Self.forgottenOverlayID(id),
             symbol: "hourglass",
             title: "Still working?",
-            message: "\(Self.label(for: entry)) has been running for \(DurationFormat.spoken(entry.duration(at: now))).",
+            message: "\(entry.displayLabel) has been running for \(DurationFormat.spoken(entry.duration(at: now))).",
             dateInput: input,
             actions: [
                 OverlayAction(title: "Still working", role: .primary) { [weak self] in
@@ -177,7 +177,7 @@ final class ReminderService {
             symbol: "moon.zzz.fill",
             title: "Welcome back",
             message: "You were away for \(DurationFormat.spoken(interval.duration)) (\(left)–\(back)) "
-                + "while \(Self.label(for: entry)) kept running.",
+                + "while \(entry.displayLabel) kept running.",
             actions: [
                 OverlayAction(title: "Remove away time", role: .primary) { [weak self] in
                     self?.presentedAway = nil
@@ -233,12 +233,6 @@ final class ReminderService {
             if result.count == limit { break }
         }
         return result
-    }
-
-    /// "Operation Rollout · Mini games", or whichever part exists.
-    static func label(for entry: TimeEntry) -> String {
-        let parts = [entry.project?.name, entry.entryDescription].compactMap { $0 }.filter { !$0.isEmpty }
-        return parts.isEmpty ? "Your timer" : parts.joined(separator: " · ")
     }
 
     private func perform(_ action: String, _ body: (ReminderService) throws -> Void) {

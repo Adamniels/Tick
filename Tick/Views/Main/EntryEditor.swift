@@ -63,3 +63,28 @@ struct EntryEditor: View {
         }
     }
 }
+
+/// What the editor sheet opens for; shared by Entries and Calendar.
+enum EditTarget: Identifiable {
+    case new
+    /// A new entry prefilled with a range, for example from the calendar.
+    case draft(EntryDraft)
+    case existing(TimeEntry)
+
+    var id: String {
+        switch self {
+        case .new: "new"
+        case .draft(let draft): "draft-\(draft.start.timeIntervalSinceReferenceDate)"
+        case .existing(let entry): entry.id.uuidString
+        }
+    }
+
+    @ViewBuilder
+    var editor: some View {
+        switch self {
+        case .new: EntryEditor(entry: nil)
+        case .draft(let draft): EntryEditor(entry: nil, draft: draft)
+        case .existing(let entry): EntryEditor(entry: entry)
+        }
+    }
+}

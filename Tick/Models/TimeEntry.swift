@@ -29,3 +29,15 @@ import SwiftData
         max(0, (end ?? now).timeIntervalSince(start))
     }
 }
+
+extension TimeEntry {
+    /// Entries can start long before they overlap a day or period (a forgotten timer), so queries
+    /// that filter on `start` reach back this far and clip in memory.
+    static let queryLookback: TimeInterval = 7 * 24 * 3600
+
+    /// "Operation Rollout · Mini games", or whichever part exists.
+    var displayLabel: String {
+        let parts = [project?.name, entryDescription].compactMap { $0 }.filter { !$0.isEmpty }
+        return parts.isEmpty ? "Your timer" : parts.joined(separator: " · ")
+    }
+}

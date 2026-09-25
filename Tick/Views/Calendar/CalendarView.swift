@@ -64,7 +64,7 @@ private struct CalendarDayView: View {
         self.onChangeDay = onChangeDay
         self.onToday = onToday
         self.onZoom = onZoom
-        let from = day - StatsPeriod.fetchLookback
+        let from = day - TimeEntry.queryLookback
         let to = Calendar.current.date(byAdding: .day, value: 1, to: day) ?? day
         _entries = Query(filter: #Predicate<TimeEntry> { $0.start >= from && $0.start < to }, sort: \TimeEntry.start)
     }
@@ -102,7 +102,7 @@ private struct CalendarDayView: View {
                 errors.run("Deleting the entry") { try TimerService(context: modelContext).delete(entry) }
             }
         } message: { entry in
-            Text("\(ReminderService.label(for: entry)), \(DurationFormat.clock(entry.duration())). This can't be undone.")
+            Text("\(entry.displayLabel), \(DurationFormat.clock(entry.duration())). This can't be undone.")
         }
     }
 
@@ -273,7 +273,7 @@ private struct CalendarDayView: View {
 
     private static func tooltip(for entry: TimeEntry, start: Date, end: Date) -> String {
         let range = "\(start.formatted(date: .omitted, time: .shortened))–\(end.formatted(date: .omitted, time: .shortened))"
-        return "\(ReminderService.label(for: entry))\n\(range)"
+        return "\(entry.displayLabel)\n\(range)"
     }
 
     private func resizeHandle(entry: TimeEntry, drag: CalendarLayout.Drag, edge: VerticalEdge) -> some View {

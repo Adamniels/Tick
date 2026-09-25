@@ -26,10 +26,8 @@ nonisolated struct StatsPeriod: Equatable {
     /// Start of each day in `full`, for per-day charts.
     let days: [Date]
 
-    /// Entries can start well before they overlap a period (a forgotten timer); fetches reach back this far.
-    static let fetchLookback: TimeInterval = 7 * 24 * 3600
-
-    var fetchStart: Date { previous.start - Self.fetchLookback }
+    /// Where a fetch for this period (and the previous one) starts; see `TimeEntry.queryLookback`.
+    var fetchStart: Date { previous.start - TimeEntry.queryLookback }
 
     static func make(
         _ kind: StatsPeriodKind, customStart: Date, customEnd: Date, now: Date, calendar: Calendar

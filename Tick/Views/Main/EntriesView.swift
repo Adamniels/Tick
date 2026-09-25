@@ -22,30 +22,6 @@ struct EntriesView: View {
     }
 }
 
-enum EditTarget: Identifiable {
-    case new
-    /// A new entry prefilled with a range, for example from the calendar.
-    case draft(EntryDraft)
-    case existing(TimeEntry)
-
-    var id: String {
-        switch self {
-        case .new: "new"
-        case .draft(let draft): "draft-\(draft.start.timeIntervalSinceReferenceDate)"
-        case .existing(let entry): entry.id.uuidString
-        }
-    }
-
-    @ViewBuilder
-    var editor: some View {
-        switch self {
-        case .new: EntryEditor(entry: nil)
-        case .draft(let draft): EntryEditor(entry: nil, draft: draft)
-        case .existing(let entry): EntryEditor(entry: entry)
-        }
-    }
-}
-
 private struct EntriesList: View {
     let onEdit: (TimeEntry) -> Void
     let onShowMore: () -> Void
@@ -115,7 +91,7 @@ private struct EntriesList: View {
                 errors.run("Deleting the entry") { try TimerService(context: modelContext).delete(entry) }
             }
         } message: { entry in
-            Text("\(ReminderService.label(for: entry)), \(DurationFormat.clock(entry.duration())). This can't be undone.")
+            Text("\(entry.displayLabel), \(DurationFormat.clock(entry.duration())). This can't be undone.")
         }
     }
 
