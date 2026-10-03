@@ -1,13 +1,23 @@
 import Foundation
 
 nonisolated enum StatsPeriodKind: String, CaseIterable, Identifiable {
-    case today, week, month, custom
+    case day, week, month, custom
 
     var id: Self { self }
 
     var title: String {
         switch self {
-        case .today: "Today"
+        case .day: "Day"
+        case .week: "Week"
+        case .month: "Month"
+        case .custom: "Custom"
+        }
+    }
+
+    /// The button that steps back to the current period.
+    var currentTitle: String {
+        switch self {
+        case .day: "Today"
         case .week: "This week"
         case .month: "This month"
         case .custom: "Custom"
@@ -29,15 +39,18 @@ nonisolated struct StatsPeriod: Equatable {
     /// Where a fetch for this period (and the previous one) starts; see `TimeEntry.queryLookback`.
     var fetchStart: Date { previous.start - TimeEntry.queryLookback }
 
+    /// `offset` steps a day, week or month period back (negative) from the current one; a custom
+    /// range ignores it. A past period is complete, so it compares with the whole period before it.
     static func make(
-        _ kind: StatsPeriodKind, customStart: Date, customEnd: Date, now: Date, calendar: Calendar
+        _ kind: StatsPeriodKind, offset: Int = 0, customStart: Date, customEnd: Date, now: Date, calendar: Calendar
     ) -> StatsPeriod {
         let full: DateInterval
         let previousStart: Date
         switch kind {
-        case .today, .week, .month:
-            let unit: Calendar.Component = kind == .today ? .day : kind == .week ? .weekOfYear : .month
-            full = calendar.dateInterval(of: unit, for: now)!
+        case .day, .week, .month:
+            let unit: Calendar.Component = kind == .day ? .day : kind == .week ? .weekOfYear : .month
+            let anchor = calendar.date(byAdding: unit, value: offset, to: now)!
+            full = calendar.dateInterval(of: unit, for: anchor)!
             previousStart = calendar.date(byAdding: unit, value: -1, to: full.start)!
         case .custom:
             let first = calendar.startOfDay(for: min(customStart, customEnd))
@@ -47,7 +60,8 @@ nonisolated struct StatsPeriod: Equatable {
         }
 
         let elapsed = min(max(0, now.timeIntervalSince(full.start)), full.duration)
-        let previousEnd = min(previousStart + elapsed, full.start)
+        // A complete period compares with the whole previous one, which can be longer (months, DST days).
+        let previousEnd = now >= full.end ? full.start : min(previousStart + elapsed, full.start)
         var days: [Date] = []
         var day = full.start
         while day < full.end {

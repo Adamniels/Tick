@@ -5,51 +5,110 @@ import SwiftUI
 /// Statistics for a chosen period (M5). All numbers come from `Statistics.compute`.
 struct StatsView: View {
     @State private var kind: StatsPeriodKind = .week
+    /// 0 is the current period, -1 the one before (#1).
+    @State private var offset = 0
     @State private var customStart = Calendar.current.date(byAdding: .day, value: -6, to: .now) ?? .now
     @State private var customEnd = Date.now
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                HStack {
-                    Picker("Period", selection: $kind) {
-                        ForEach(StatsPeriodKind.allCases) { Text($0.title).tag($0) }
+        // Every minute, so the period, its label and its query follow midnight even while the
+        // window is closed (it's kept alive, D16).
+        TimelineView(.everyMinute) { context in
+            let now = context.date
+            let period = StatsPeriod.make(
+                kind, offset: offset, customStart: customStart, customEnd: customEnd, now: now, calendar: .current
+            )
+            let fetchRange = DateInterval(start: period.fetchStart, end: period.full.end)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    HStack {
+                        Picker("Period", selection: $kind) {
+                            ForEach(StatsPeriodKind.allCases) { Text($0.title).tag($0) }
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+                        .fixedSize()
+                        if kind == .custom {
+                            DatePicker("From", selection: $customStart, displayedComponents: .date)
+                            DatePicker("To", selection: $customEnd, displayedComponents: .date)
+                        } else {
+                            PeriodStepper(kind: kind, full: period.full, now: now, offset: $offset)
+                        }
+                        Spacer()
                     }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                    .fixedSize()
-                    if kind == .custom {
-                        DatePicker("From", selection: $customStart, displayedComponents: .date)
-                        DatePicker("To", selection: $customEnd, displayedComponents: .date)
-                    }
-                    Spacer()
-                }
+                    .onChange(of: kind) { offset = 0 }
 
-                StatsContent(kind: kind, customStart: customStart, customEnd: customEnd)
-                    // A new period needs a new query.
-                    .id("\(kind)|\(Calendar.current.startOfDay(for: customStart))|\(Calendar.current.startOfDay(for: customEnd))")
+                    StatsContent(
+                        kind: kind, offset: offset, customStart: customStart, customEnd: customEnd, fetchRange: fetchRange
+                    )
+                    // The query's range is fixed when StatsContent is created, so a new range needs a new view.
+                    .id(fetchRange)
+                }
+                .padding(20)
             }
-            .padding(20)
         }
         .navigationTitle("Statistics")
     }
 }
 
+/// ‹ › through days, weeks or months, the period shown, and a way back to the current one (#1).
+private struct PeriodStepper: View {
+    let kind: StatsPeriodKind
+    let full: DateInterval
+    let now: Date
+    @Binding var offset: Int
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Button { offset -= 1 } label: { Image(systemName: "chevron.left") }
+                .help("Previous \(kind.title.lowercased())")
+            Button { offset += 1 } label: { Image(systemName: "chevron.right") }
+                .help("Next \(kind.title.lowercased())")
+                .disabled(offset >= 0)
+            Text(label)
+                .monospacedDigit()
+            if offset != 0 {
+                Button(kind.currentTitle) { offset = 0 }
+            }
+        }
+    }
+
+    private var label: String {
+        let calendar = Calendar.current
+        let lastDay = calendar.date(byAdding: .day, value: -1, to: full.end)!
+        let otherYear = calendar.component(.year, from: lastDay) != calendar.component(.year, from: now)
+        switch kind {
+        case .day:
+            let style = Date.FormatStyle.dateTime.weekday(.wide).day().month(.wide)
+            return full.start.formatted(otherYear ? style.year() : style)
+        case .week:
+            let week = calendar.component(.weekOfYear, from: full.start)
+            let style = Date.IntervalFormatStyle().day().month(.abbreviated)
+            return "Week \(week) · " + (full.start..<lastDay).formatted(otherYear ? style.year() : style)
+        case .month:
+            return full.start.formatted(.dateTime.month(.wide).year())
+        case .custom:
+            return ""
+        }
+    }
+}
+
 private struct StatsContent: View {
     let kind: StatsPeriodKind
+    let offset: Int
     let customStart: Date
     let customEnd: Date
 
     @Query private var entries: [TimeEntry]
     @Query private var workBlocks: [PomodoroSession]
 
-    init(kind: StatsPeriodKind, customStart: Date, customEnd: Date) {
+    init(kind: StatsPeriodKind, offset: Int, customStart: Date, customEnd: Date, fetchRange: DateInterval) {
         self.kind = kind
+        self.offset = offset
         self.customStart = customStart
         self.customEnd = customEnd
-        let period = StatsPeriod.make(kind, customStart: customStart, customEnd: customEnd, now: .now, calendar: .current)
-        let from = period.fetchStart
-        let to = period.full.end
+        let from = fetchRange.start
+        let to = fetchRange.end
         _entries = Query(filter: #Predicate<TimeEntry> { $0.start >= from && $0.start < to })
         let work = PomodoroPhase.work.rawValue
         _workBlocks = Query(filter: #Predicate<PomodoroSession> {
@@ -61,14 +120,16 @@ private struct StatsContent: View {
         // Refreshes so a running timer is included.
         TimelineView(.periodic(from: .now, by: 30)) { context in
             let now = context.date
-            let period = StatsPeriod.make(kind, customStart: customStart, customEnd: customEnd, now: now, calendar: .current)
+            let period = StatsPeriod.make(
+                kind, offset: offset, customStart: customStart, customEnd: customEnd, now: now, calendar: .current
+            )
             let stats = Statistics.compute(
                 entries: entries, completedWorkBlockStarts: workBlocks.map(\.start),
                 period: period, now: now, calendar: .current
             )
 
             VStack(alignment: .leading, spacing: 20) {
-                Header(stats: stats, kind: kind)
+                Header(stats: stats, kind: kind, isCurrent: offset == 0)
                 if stats.total == 0 {
                     Text("No time tracked in this period.")
                         .foregroundStyle(.secondary)
@@ -91,6 +152,7 @@ private struct StatsContent: View {
 private struct Header: View {
     let stats: Statistics
     let kind: StatsPeriodKind
+    let isCurrent: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -114,11 +176,14 @@ private struct Header: View {
     private var comparison: String {
         let delta = stats.total - stats.previousTotal
         let sign = delta >= 0 ? "+" : "−"
-        let reference = switch kind {
-        case .today: "yesterday at this time"
-        case .week: "last week at this point"
-        case .month: "last month at this point"
-        case .custom: "the same length before"
+        let reference = switch (kind, isCurrent) {
+        case (.day, true): "yesterday at this time"
+        case (.day, false): "the day before"
+        case (.week, true): "last week at this point"
+        case (.week, false): "the week before"
+        case (.month, true): "last month at this point"
+        case (.month, false): "the month before"
+        case (.custom, _): "the same length before"
         }
         guard stats.previousTotal > 0 else { return "Nothing tracked \(reference)" }
         let percent = Int((abs(delta) / stats.previousTotal * 100).rounded())

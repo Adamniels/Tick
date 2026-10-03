@@ -10,12 +10,14 @@ struct StatsPeriodTests {
     }()
     func date(_ day: Int, _ hour: Int, _ minute: Int = 0) -> Date { TestCalendar.date(day, hour, minute) }
 
-    func make(_ kind: StatsPeriodKind, now: Date, from: Date? = nil, to: Date? = nil) -> StatsPeriod {
-        StatsPeriod.make(kind, customStart: from ?? now, customEnd: to ?? now, now: now, calendar: calendar)
+    func make(_ kind: StatsPeriodKind, offset: Int = 0, now: Date, from: Date? = nil, to: Date? = nil) -> StatsPeriod {
+        StatsPeriod.make(
+            kind, offset: offset, customStart: from ?? now, customEnd: to ?? now, now: now, calendar: calendar
+        )
     }
 
     @Test func todayComparesWithYesterdayAtTheSameTime() {
-        let period = make(.today, now: date(24, 15))
+        let period = make(.day, now: date(24, 15))
         #expect(period.current == DateInterval(start: date(24, 0), end: date(24, 15)))
         #expect(period.previous == DateInterval(start: date(23, 0), end: date(23, 15)))
         #expect(period.days == [date(24, 0)])
@@ -48,6 +50,33 @@ struct StatsPeriodTests {
         let period = make(.custom, now: date(30, 12), from: date(20, 0), to: date(14, 0))
         #expect(period.full.start == date(14, 0))
     }
+
+    @Test func previousDayIsCompleteAndComparesWithTheWholeDayBefore() {
+        let period = make(.day, offset: -1, now: date(24, 15))
+        #expect(period.full == DateInterval(start: date(23, 0), end: date(24, 0)))
+        #expect(period.current == period.full)
+        #expect(period.previous == DateInterval(start: date(22, 0), end: date(23, 0)))
+    }
+
+    @Test func previousWeekIsCompleteAndComparesWithTheWholeWeekBefore() {
+        let period = make(.week, offset: -1, now: date(24, 15))  // Thursday
+        #expect(period.full == DateInterval(start: date(14, 0), end: date(21, 0)))
+        #expect(period.current == period.full)
+        #expect(period.previous == DateInterval(start: date(7, 0), end: date(14, 0)))
+    }
+
+    @Test func steppingBackFromTheThirtyFirstLandsInTheMonthBefore() {
+        let period = make(.month, offset: -1, now: TestCalendar.date(31, 12, month: 10))
+        #expect(period.full == DateInterval(start: date(1, 0), end: TestCalendar.date(1, 0, month: 10)))
+        #expect(period.current == period.full)
+        #expect(period.previous == DateInterval(start: TestCalendar.date(1, 0, month: 8), end: date(1, 0)))
+        #expect(period.days.count == 30)
+    }
+
+    @Test func customRangeIgnoresTheOffset() {
+        let period = make(.custom, offset: -3, now: date(30, 12), from: date(14, 10), to: date(20, 18))
+        #expect(period.full == DateInterval(start: date(14, 0), end: date(21, 0)))
+    }
 }
 
 struct StatisticsComputeTests {
@@ -56,7 +85,7 @@ struct StatisticsComputeTests {
 
     /// Monday 21 September, measured up to 18:00.
     var monday: StatsPeriod {
-        StatsPeriod.make(.today, customStart: .now, customEnd: .now, now: date(21, 18), calendar: calendar)
+        StatsPeriod.make(.day, customStart: .now, customEnd: .now, now: date(21, 18), calendar: calendar)
     }
 
     func entry(_ start: Date, _ end: Date?, project: Project? = nil, tags: [Tick.Tag] = []) -> TimeEntry {
