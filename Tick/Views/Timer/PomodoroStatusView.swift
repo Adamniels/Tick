@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The active pomodoro phase in the panel, with time left and its actions.
+/// The active pomodoro phase, with time left and its actions (panel and main window).
 struct PomodoroStatusView: View {
     let session: PomodoroSession
     let onStartBreak: () -> Void

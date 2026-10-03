@@ -192,6 +192,7 @@ Tick/
                   CalendarLayout, EntryEditing, DataExport, ErrorReporter
   Views/
     MenuBar/      menyradspanelen
+    Timer/        start, stopp och pomodoro, delas av panelen och huvudfönstrets toppfält
     Main/         huvudfönstret: poster, redigering, projekt och taggar
     Calendar/     dagvyn
     Stats/        statistik med Swift Charts

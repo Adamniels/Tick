@@ -23,14 +23,13 @@ struct MainWindow: View {
             }
             .navigationSplitViewColumnWidth(min: 160, ideal: 180)
         } detail: {
-            switch selection {
-            case .entries: EntriesView()
-            case .calendar: CalendarView()
-            case .statistics: StatsView()
-            case .projects: LabelListView<Project>(title: "Projects", noun: "project")
-            case .tags: LabelListView<Tag>(title: "Tags", noun: "tag")
-            case .settings: SettingsView(onTestPopup: onTestPopup)
-            case nil: Text("Select a section").foregroundStyle(.secondary)
+            VStack(spacing: 0) {
+                TimerControls(style: .bar)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                Divider()
+                section
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .frame(minWidth: 560, minHeight: 360)
@@ -41,6 +40,18 @@ struct MainWindow: View {
             Button("OK", action: errors.dismiss)
         } message: {
             Text(errors.message ?? "")
+        }
+    }
+
+    @ViewBuilder private var section: some View {
+        switch selection {
+        case .entries: EntriesView()
+        case .calendar: CalendarView()
+        case .statistics: StatsView()
+        case .projects: LabelListView<Project>(title: "Projects", noun: "project")
+        case .tags: LabelListView<Tag>(title: "Tags", noun: "tag")
+        case .settings: SettingsView(onTestPopup: onTestPopup)
+        case nil: Text("Select a section").foregroundStyle(.secondary)
         }
     }
 }
