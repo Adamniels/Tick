@@ -284,6 +284,17 @@ Open work is tracked as GitHub issues; this lists what landed and the decisions 
 - [x] #4: "Start break" in the panel during a work block, so a break can start early without ending the pomodoro (D42). Verified by hand.
 - [x] #2: a timer bar at the top of the main window, in every section: start, stop, edit the running description, and the pomodoro controls (D43). Verified by hand, including the narrowest window.
 
+
+---
+
+## Releases
+
+Each release: bump `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` (app target), deploy the CloudKit schema if the schema log has an undeployed row, archive and export as in M6, replace `Tick.app` on both Macs, then tag the release commit `vX.Y`.
+
+| Version | Date | Tag | Contents |
+|---------|------|-----|----------|
+| 1.0 (1) | 2026-09-25 | none | M0 to M7, first install. |
+| 1.1 (2) | 2026-10-03 | `v1.1` | #1, #2, #3, #4, #6. No schema change. Installed on both Macs. |
 ---
 
 ## Decision log
