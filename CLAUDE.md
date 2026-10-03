@@ -215,7 +215,7 @@ Status och detaljer finns i `PLAN.md`.
 3. **Påminnelser:** tomgång, glömd timer, vila och låst skärm. ✅
 4. **Huvudfönster:** lista grupperad per dag, manuella poster, redigera och ta bort. ✅
 5. **Statistik.** ✅
-6. **Finputs och installation:** globala kortkommandon, inloggningsobjekt, inställningar, ikon, notariserad installation. ✅ (testet med två Macar återstår, D18)
+6. **Finputs och installation:** globala kortkommandon, inloggningsobjekt, inställningar, ikon, notariserad installation. ✅ (testet med två Macar klart 2026-10-03)
 7. **Kalendervy och export.** ✅
 8. **(Senare)** Import från Toggl och återställning från en Tick export.
 

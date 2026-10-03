@@ -21,12 +21,12 @@ Status legend: ⬜ not started · 🟨 in progress · ✅ done
 | # | Milestone | Status |
 |---|-----------|--------|
 | 0 | Housekeeping | ✅ |
-| 1 | Foundation: models, sync, menu bar timer, projects and tags | ✅ (sync test deferred to M6, D18) |
+| 1 | Foundation: models, sync, menu bar timer, projects and tags | ✅ (sync test done in M6, 2026-10-03) |
 | 2 | The popup and pomodoro | ✅ |
 | 3 | Reminders | ✅ |
 | 4 | Main window: entries | ✅ |
 | 5 | Statistics | ✅ |
-| 6 | Polish and install | ✅ (installed and verified 2026-09-25; two-Mac test still open, D18) |
+| 6 | Polish and install | ✅ (installed and verified 2026-09-25; two-Mac sync test done 2026-10-03) |
 | 7 | Calendar day view (+ data export) | ✅ |
 | 8 | Later: Toggl import | ⬜ |
 
@@ -82,7 +82,7 @@ Everything under Menu bar and Projects and tags is implemented, and builds and t
 - [x] Archived project disappears from the panel picker but stays on today's entries.
 
 ### Sync check
-Deferred to M6 (decision D18): only one Mac is available right now.
+Deferred to M6 (decision D18): only one Mac is available right now. Done 2026-10-03, see M6.
 
 **Done when:** you can track real work from the menu bar all day, projects and tags sync between the Macs, and the tests pass.
 **Reminder:** deploy the CloudKit schema before using an archived build (first time ever).
@@ -203,7 +203,7 @@ Goal: an app you install once and forget about.
 - [x] Launch at login toggle via `SMAppService.mainApp` (Settings → General), including the "requires approval" case.
 - [x] Settings reorganized into tabs: General, Pomodoro, Reminders, Popup, Shortcuts.
 - [x] App icon (generated: white stopwatch on an orange-red gradient). The menu bar icon stays the SF Symbol `stopwatch`, a template image.
-- [ ] Two-Mac sync test (deferred from M1, D18), see the install steps below.
+- [x] Two-Mac sync test (deferred from M1, D18), see the install steps below. Done 2026-10-03 with the second Mac, confirmed by Adam.
 
 ### Install (Adam; needs your Apple account)
 1. **Check the development schema.** CloudKit Console → `iCloud.com.adamniels.Tick` → Development → Schema → Record Types. All four must exist: `CD_Project`, `CD_Tag`, `CD_TimeEntry`, `CD_PomodoroSession` (with `CD_runID` and `CD_endedAt`). A record type only appears after its first record is saved, so if one is missing, create one in a debug build (for example a tag) and check again.
@@ -346,5 +346,5 @@ Each model change must be deployed via CloudKit Console → Deploy Schema Change
 
 | Date | Change | Deployed to production |
 |------|--------|------------------------|
-| — | Initial schema (M1) | ⬜ |
-| 2026-09-24 | `PomodoroSession`: added `runID: UUID`, `endedAt: Date?` (M2, D21). Production has never been deployed, so this folds into the first deploy. | ⬜ |
+| — | Initial schema (M1) | ✅ (before the 2026-09-25 install; production syncs, log updated 2026-10-03) |
+| 2026-09-24 | `PomodoroSession`: added `runID: UUID`, `endedAt: Date?` (M2, D21). Production has never been deployed, so this folds into the first deploy. | ✅ (with the initial schema) |
