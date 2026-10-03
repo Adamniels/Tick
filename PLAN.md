@@ -275,6 +275,14 @@ A review pass after M7, one commit per item, with build, tests and a Release bui
 
 ---
 
+## Fixes from GitHub issues (from 2026-10-03)
+
+Open work is tracked as GitHub issues; this lists what landed and the decisions behind it.
+
+- [x] #3 and #6: the main window opens on the current Space and display, and opening it no longer leaves the menu bar blank (D40). Verified by hand.
+
+---
+
 ## Decision log
 
 | # | Date | Decision | Why |
@@ -320,6 +328,7 @@ A review pass after M7, one commit per item, with build, tests and a Release bui
 | D37 | 2026-09-24 | Hardened Runtime enabled for the app target, with no exceptions. | Required for notarization (Direct Distribution). Nothing Tick does (Carbon hotkeys, input idle time, panels, SwiftData/CloudKit, SMAppService, statically linked KeyboardShortcuts) needs a runtime exception. Tests still run with the injected test bundle. |
 | D38 | 2026-09-25 | `TrackingService` is the single entry point for start, stop and continue, applying D22; `PomodoroService` only handles phases, transitions and the popup, exposing `beginWorkBlock` and `endRun` to it. | All tracking went through `PomodoroService`, even without pomodoro, which hid where tracking starts and stops. Behavior unchanged; the existing tests cover it. |
 | D39 | 2026-09-25 | User actions run through one `ErrorReporter` (injected into services, in the environment for views): failures are logged and shown as a dismissible panel banner and a main-window alert. The per-second refresh only logs. | Six helpers only logged errors, so a failed save was invisible. The refresh loop would flood the UI with a persistent error. The service wiring is covered by review, not tests: forcing a real save failure would need a test-only hook in production code. |
+| D40 | 2026-10-03 | (#3, #6) The main window is `.moveToActiveSpace` and `.fullScreenAuxiliary`, is placed on the display with keyboard focus (`NSScreen.main`; centred there if it is elsewhere, pure `WindowPlacement`), and is ordered in before Tick activates. Tick's own window can no longer go full screen. | Activating first made macOS switch to the Space the window was last on, and that switch left the system menu bar blank. The popover and the popup already ordered in first. |
 
 ## Open questions
 

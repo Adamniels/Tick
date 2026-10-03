@@ -22,11 +22,17 @@ final class MainWindowController {
         self.onTestPopup = onTestPopup
     }
 
+    /// Shows the window on the current Space and display (#3). The window is ordered in before Tick
+    /// activates: activating first switched to the Space the window was last on, and that switch
+    /// could leave the system menu bar blank (#6). The popover and the popup use the same order.
     func show() {
         let window = self.window ?? makeWindow()
         self.window = window
-        NSApp.activate()
+        if let screen = NSScreen.main ?? NSScreen.screens.first {
+            window.setFrame(WindowPlacement.frame(window.frame, on: screen.visibleFrame), display: false)
+        }
         window.makeKeyAndOrderFront(nil)
+        NSApp.activate()
     }
 
     private func makeWindow() -> NSWindow {
@@ -41,9 +47,23 @@ final class MainWindowController {
         let window = NSWindow(contentViewController: hostingController)
         window.title = "Tick"
         window.isReleasedWhenClosed = false
+        window.collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary]
         window.setContentSize(NSSize(width: 820, height: 560))
         window.center()
         window.setFrameAutosaveName("MainWindow")
         return window
+    }
+}
+
+nonisolated enum WindowPlacement {
+    /// Keeps `frame` if its centre is on the display with `visibleFrame`; otherwise centres it there,
+    /// shrunk to fit if needed.
+    static func frame(_ frame: CGRect, on visibleFrame: CGRect) -> CGRect {
+        if visibleFrame.contains(CGPoint(x: frame.midX, y: frame.midY)) { return frame }
+        let width = min(frame.width, visibleFrame.width)
+        let height = min(frame.height, visibleFrame.height)
+        return CGRect(
+            x: visibleFrame.midX - width / 2, y: visibleFrame.midY - height / 2, width: width, height: height
+        )
     }
 }
