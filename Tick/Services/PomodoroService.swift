@@ -78,9 +78,11 @@ import SwiftData
 
     // MARK: - Phase transitions (popup buttons and panel)
 
+    /// From the popup at the block's end, or early from the panel (#4). Like `endRun`, a block cut
+    /// short doesn't count, so it doesn't bring the long break closer.
     func startBreak(after work: PomodoroSession, at now: Date = .now) throws {
         let settings = settings()
-        finish(work, completed: true, at: now)
+        finish(work, completed: now >= work.plannedEnd, at: now)
         try context.save()
         let completed = try completedWorkBlocks(inRun: work.runID)
         let phase = PomodoroCycle.breakPhase(afterCompletedWorkBlocks: completed, longBreakEvery: settings.longBreakEvery)

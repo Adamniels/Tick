@@ -51,6 +51,7 @@ struct MenuBarPanel: View {
             if let session {
                 PomodoroStatusView(
                     session: session,
+                    onStartBreak: { errors.run("Starting the break") { try pomodoro.startBreak(after: session) } },
                     onStartNextBlock: { errors.run("Starting the next block") { try pomodoro.startNextBlock(after: session) } },
                     onEnd: { errors.run("Ending the pomodoro") { try pomodoro.end() } }
                 )

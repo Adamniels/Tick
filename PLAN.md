@@ -281,6 +281,7 @@ Open work is tracked as GitHub issues; this lists what landed and the decisions 
 
 - [x] #3 and #6: the main window opens on the current Space and display, and opening it no longer leaves the menu bar blank (D40). Verified by hand.
 - [x] #1: Statistics steps through days, weeks and months with ‹ ›, shows the period, and has a button back to the current one (D41). Verified by hand. Also fixed: a completed period lost the end of a longer previous period in its comparison, and the stats query kept its old range across midnight.
+- [x] #4: "Start break" in the panel during a work block, so a break can start early without ending the pomodoro (D42). Verified by hand.
 
 ---
 
@@ -331,6 +332,7 @@ Open work is tracked as GitHub issues; this lists what landed and the decisions 
 | D39 | 2026-09-25 | User actions run through one `ErrorReporter` (injected into services, in the environment for views): failures are logged and shown as a dismissible panel banner and a main-window alert. The per-second refresh only logs. | Six helpers only logged errors, so a failed save was invisible. The refresh loop would flood the UI with a persistent error. The service wiring is covered by review, not tests: forcing a real save failure would need a test-only hook in production code. |
 | D40 | 2026-10-03 | (#3, #6) The main window is `.moveToActiveSpace` and `.fullScreenAuxiliary`, is placed on the display with keyboard focus (`NSScreen.main`; centred there if it is elsewhere, pure `WindowPlacement`), and is ordered in before Tick activates. Tick's own window can no longer go full screen. | Activating first made macOS switch to the Space the window was last on, and that switch left the system menu bar blank. The popover and the popup already ordered in first. |
 | D41 | 2026-10-03 | (#1) Statistics periods are Day, Week, Month and Custom, stepped with a relative `offset` (0 is current, negative is past; no future). Changing the kind resets it; Custom keeps its date pickers. A completed period compares with the whole previous period (refines D32). The stats view recomputes the period every minute and keys its content on the query range, so the query follows midnight. | An offset never goes stale, unlike a stored date: after midnight 0 is still today. Comparing with "previous start + elapsed" cut a 31-day month or a DST day short. The window is only hidden when closed (D16), so a query fixed at creation showed last week's range on Monday morning. |
+| D42 | 2026-10-03 | (#4) A break can start early from the panel through the same `startBreak` as the popup. A work block counts as completed only if it reached its planned end, so an early break neither counts as a pomodoro nor brings the long break closer. | Same rule as stopping early (`endRun`), so pomodoro stats stay honest. Tradeoff: with early breaks the long break comes later in the cycle. |
 
 ## Open questions
 

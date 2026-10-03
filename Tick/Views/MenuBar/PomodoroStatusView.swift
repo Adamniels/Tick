@@ -3,6 +3,7 @@ import SwiftUI
 /// The active pomodoro phase in the panel, with time left and its actions.
 struct PomodoroStatusView: View {
     let session: PomodoroSession
+    let onStartBreak: () -> Void
     let onStartNextBlock: () -> Void
     let onEnd: () -> Void
 
@@ -16,6 +17,8 @@ struct PomodoroStatusView: View {
             Spacer()
             if session.phaseValue.isBreak {
                 Button("Start next block", action: onStartNextBlock)
+            } else {
+                Button("Start break", action: onStartBreak)
             }
             Button("End pomodoro", action: onEnd)
         }

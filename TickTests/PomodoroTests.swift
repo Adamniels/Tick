@@ -97,6 +97,39 @@ final class PomodoroServiceTests {
         #expect(try service.completedWorkBlocks(inRun: active.runID) == 1)
     }
 
+    @Test func earlyBreakStartsTheBreakWithoutCountingTheBlock() throws {
+        try startWorking()
+        let block = try #require(try service.activeSession())
+        try service.startBreak(after: block, at: t0 + 10 * 60)
+
+        let active = try #require(try service.activeSession())
+        #expect(active.phaseValue == .shortBreak)
+        #expect(active.plannedEnd == t0 + 15 * 60)
+        #expect(!block.completed)
+        #expect(try service.completedWorkBlocks(inRun: active.runID) == 0)
+        #expect(try timer.runningEntries().isEmpty)
+    }
+
+    @Test func earlyBreakDoesNotBringTheLongBreakCloser() throws {
+        try startWorking()
+        var now = t0
+        for _ in 1...3 {
+            now += work
+            try service.startBreak(after: try #require(try service.activeSession()), at: now)
+            now += 5 * 60
+            try service.startNextBlock(after: try #require(try service.activeSession()), at: now)
+        }
+        now += 10 * 60  // Fourth block, cut short.
+        try service.startBreak(after: try #require(try service.activeSession()), at: now)
+        #expect(try service.activeSession()?.phaseValue == .shortBreak)
+
+        now += 5 * 60
+        try service.startNextBlock(after: try #require(try service.activeSession()), at: now)
+        now += work
+        try service.startBreak(after: try #require(try service.activeSession()), at: now)
+        #expect(try service.activeSession()?.phaseValue == .longBreak)
+    }
+
     @Test func keepEntryRunningSettingLeavesTheTimerOnDuringBreaks() throws {
         settings.keepEntryRunningDuringBreaks = true
         try startWorking()
